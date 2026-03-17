@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水分管理CDSS</title>
+  <style>
+    :root {
+      --bg: #eef4f2;
+      --paper: #ffffff;
+      --ink: #17313a;
+      --muted: #59717a;
+      --line: #cfe0db;
+      --hero: #0c6b67;
+      --hero-2: #8fd0c7;
+      --hero-soft: #e0f2ee;
+      --critical: #a7262f;
+      --critical-bg: #fff1f2;
+      --warning: #9a6408;
+      --warning-bg: #fff8e8;
+      --info: #0f5f86;
+      --info-bg: #edf8ff;
+      --ok: #1e7a4f;
+      --ok-bg: #eef9f2;
+      --shadow: 0 18px 50px rgba(20, 57, 56, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "BIZ UDPGothic", "Yu Gothic UI", Meiryo, sans-serif;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(143, 208, 199, 0.45), transparent 30%),
+        linear-gradient(180deg, #f5fbf9 0%, var(--bg) 100%);
+    }
+
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0c6b67 0%, #114f68 60%, #dff4ef 180%);
+      color: #f6fffd;
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -100px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      max-width: 920px;
+      line-height: 1.75;
+      margin-bottom: 0;
+      color: rgba(246, 255, 253, 0.92);
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fbfffe, #f5fbf9);
+    }
+
+    .card-body {
+      padding: 22px;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fcfffe;
+    }
+
+    .section h3 {
+      font-size: 16px;
+      margin-bottom: 14px;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid #bdd2cc;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 16px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .check input {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--hero), #1e8e87);
+      color: white;
+    }
+
+    .secondary {
+      background: var(--hero-soft);
+      color: var(--hero);
+    }
+
+    .ghost {
+      background: #f4faf8;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fcfffe;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .metric .value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .banner {
+      border-radius: 18px;
+      padding: 16px 18px;
+      border: 1px solid transparent;
+      line-height: 1.7;
+    }
+
+    .banner h3 {
+      margin-bottom: 8px;
+    }
+
+    .banner ul,
+    .panel ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .critical {
+      color: var(--critical);
+      background: var(--critical-bg);
+      border-color: #f1b9be;
+    }
+
+    .warning {
+      color: var(--warning);
+      background: var(--warning-bg);
+      border-color: #eed695;
+    }
+
+    .info {
+      color: var(--info);
+      background: var(--info-bg);
+      border-color: #b8daee;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: #fcfffe;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px 14px;
+      margin: 0;
+    }
+
+    .kv dt {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .kv dd {
+      margin: 0;
+    }
+
+    .formula-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .formula {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: white;
+    }
+
+    .formula strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5efec;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: #eff7f4;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.none { background: #eef7f4; color: var(--ok); }
+    .pill.info { background: var(--info-bg); color: var(--info); }
+    .pill.warning { background: var(--warning-bg); color: var(--warning); }
+    .pill.critical { background: var(--critical-bg); color: var(--critical); }
+
+    .muted-box {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f4faf8;
+      border: 1px dashed var(--line);
+      line-height: 1.7;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .output-sheet {
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-header {
+      background: #1f3f73;
+      color: #fff;
+      padding: 10px 16px;
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .result-subnote {
+      text-align: center;
+      color: #c62828;
+      font-size: 13px;
+      padding: 6px 10px 0;
+    }
+
+    .status-strip {
+      color: #fff;
+      font-weight: 800;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 18px;
+    }
+
+    .status-strip.warning {
+      background: #d97706;
+    }
+
+    .status-strip.critical {
+      background: #cc0000;
+    }
+
+    .status-strip.none {
+      background: #cc0000;
+    }
+
+    .status-strip.warning.none {
+      background: #d97706;
+      color: #111;
+    }
+
+    .sheet-alert {
+      border: 1px solid var(--line);
+      border-left: 8px solid #888;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fff;
+      line-height: 1.7;
+    }
+
+    .sheet-alert.critical {
+      border-left-color: var(--critical);
+      background: var(--critical-bg);
+    }
+
+    .sheet-alert.warning {
+      border-left-color: var(--warning);
+      background: var(--warning-bg);
+    }
+
+    .sheet-alert.info {
+      border-left-color: var(--info);
+      background: var(--info-bg);
+    }
+
+    .band-section {
+      border: 1px solid #9cab98;
+      background: #fff;
+    }
+
+    .band-title {
+      color: #fff;
+      font-weight: 800;
+      padding: 7px 12px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .band-title.blue {
+      background: #233f73;
+    }
+
+    .band-title.green {
+      background: #406922;
+    }
+
+    .band-title.orange {
+      background: #d97706;
+    }
+
+    .band-title.gray {
+      background: #595959;
+    }
+
+    .band-body {
+      padding: 0;
+    }
+
+    .calc-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+    }
+
+    .calc-table th,
+    .calc-table td {
+      border: 1px solid #9cab98;
+      padding: 8px 10px;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    .calc-table th {
+      width: 160px;
+      background: #eef0f1;
+      font-weight: 700;
+    }
+
+    .calc-table td.value {
+      width: 260px;
+      font-weight: 800;
+      color: #17313a;
+      background: #f8fbfb;
+    }
+
+    .calc-table td.note {
+      color: var(--muted);
+      background: #fbfbf6;
+      font-size: 12px;
+    }
+
+    .protocol-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 880px;
+    }
+
+    .protocol-table th,
+    .protocol-table td {
+      border: 1px solid #3e4f26;
+      padding: 7px 8px;
+      font-size: 13px;
+      text-align: center;
+      vertical-align: top;
+    }
+
+    .protocol-table thead th {
+      background: #506f2d;
+      color: #fff;
+      position: static;
+    }
+
+    .protocol-table tbody td:first-child {
+      font-weight: 700;
+      background: #f3f4ea;
+    }
+
+    .protocol-table tfoot td {
+      font-weight: 800;
+      background: #f6ead1;
+    }
+
+    .protocol-note {
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #35502b;
+      background: #eef3e4;
+      border-top: 1px solid #9cab98;
+    }
+
+    .orange-body {
+      background: #f5e7bf;
+    }
+
+    .orange-body .calc-table th {
+      background: #f4d998;
+    }
+
+    .orange-emphasis {
+      color: #d97706;
+      font-weight: 800;
+    }
+
+    .recommend-box {
+      background: #efe7c6;
+      border-top: 1px solid #9cab98;
+      padding: 8px 12px;
+      font-weight: 800;
+      color: #6f4b00;
+    }
+
+    .warn-line {
+      padding: 8px 12px;
+      color: #d97706;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .wrap { padding: 14px 10px 36px; }
+      .hero { padding: 20px 16px; border-radius: 20px; }
+      .card,
+      .section,
+      .panel { border-radius: 16px; }
+      .card-head { padding: 16px 16px 12px; }
+      .card-body { padding: 16px; }
+      .section-grid,
+      .fields,
+      .summary-grid,
+      .check-grid { grid-template-columns: 1fr; }
+
+      .kv { grid-template-columns: 1fr; }
+      table { min-width: 720px; }
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 24px; }
+      .actions { flex-direction: column; }
+      .actions button { width: 100%; }
+      .result-header {
+        font-size: 18px;
+        padding: 10px 12px;
+      }
+      .result-subnote {
+        font-size: 12px;
+        padding-top: 4px;
+      }
+      .status-strip {
+        font-size: 16px;
+        padding: 8px 10px;
+      }
+      .band-title {
+        font-size: 16px;
+        padding: 8px 10px;
+      }
+      .sheet-alert {
+        padding: 10px 12px;
+      }
+      .calc-table,
+      .calc-table tbody,
+      .calc-table tr,
+      .calc-table th,
+      .calc-table td {
+        display: block;
+        width: 100%;
+      }
+      .calc-table tr + tr th {
+        border-top-width: 0;
+      }
+      .calc-table th {
+        border-bottom: 0;
+      }
+      .calc-table td.value,
+      .calc-table td.note {
+        width: 100%;
+      }
+      .calc-table td.note {
+        border-top: 0;
+      }
+      .protocol-table {
+        min-width: 760px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <h1>水分管理CDSS</h1>
+      <p>仕様書 Ver 1.1 と既存Excelロジックをもとに、入力フォーム、計算ロジック、判定理由表示、Critical警告、検証用50症例を1つのブラウザツールにまとめたHTML版です。診断を代替するものではなく、思考過程と安全確認を可視化するための判断支援です。</p>
+      <div class="hero-meta">
+        <span class="chip">ブラウザ単体で動作</span>
+        <span class="chip">Critical時は提案停止</span>
+        <span class="chip">50症例を内蔵</span>
+        <span class="chip">判定理由と式を表示</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card">
+        <div class="card-head">
+          <h2>症例入力</h2>
+          <p class="subtle">必須項目を埋めて「判定する」を押すと、アラートレベル、脱水タイプ、欠乏量推定、維持輸液量、Na補正速度、安全上の注意点をまとめて表示します。</p>
+        </div>
+        <div class="card-body">
+          <div class="section-grid">
+            <section class="section">
+              <h3>基本情報</h3>
+              <div class="fields">
+                <div class="field"><label for="patientName">症例名</label><input id="patientName" type="text" value="初期症例"></div>
+                <div class="field"><label for="age">年齢</label><input id="age" type="number" min="0" max="120" value="72"></div>
+                <div class="field"><label for="sex">性別</label><select id="sex"><option>男性</option><option>女性</option><option>その他</option></select></div>
+                <div class="field"><label for="heightCm">身長 (cm)</label><input id="heightCm" type="number" min="50" max="250" step="0.1" value="162"></div>
+                <div class="field"><label for="baselineWeightKg">通常時体重 (kg)</label><input id="baselineWeightKg" type="number" min="20" max="300" step="0.1" value="60"></div>
+                <div class="field"><label for="currentWeightKg">現体重 (kg)</label><input id="currentWeightKg" type="number" min="20" max="300" step="0.1" value="57"></div>
+                <div class="field"><label for="baselineDate">通常時測定日時</label><input id="baselineDate" type="datetime-local" value="2026-03-01T09:00"></div>
+                <div class="field"><label for="currentDate">現体重測定日時</label><input id="currentDate" type="datetime-local" value="2026-03-05T09:00"></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3>バイタル・意識</h3>
+              <div class="fields">
+                <div class="field"><label for="mentalStatusMode">意識評価方式</label><select id="mentalStatusMode"><option value="GCS">GCS（E/V/M + 合計点）</option><option value="JCS">JCS（清明 / I / II / III）</option></select></div>
+                <div class="field full" id="gcsField">
+                  <label>GCS 表記</label>
+                  <div class="fields">
+                    <div class="field"><label for="gcsEye">E 開眼</label><select id="gcsEye"><option value="">未入力</option><option value="4" selected>E4 自発的</option><option value="3">E3 呼びかけ</option><option value="2">E2 痛み刺激</option><option value="1">E1 開眼なし</option></select></div>
+                    <div class="field"><label for="gcsVerbal">V 言語</label><select id="gcsVerbal"><option value="">未入力</option><option value="5">V5 見当識あり</option><option value="4" selected>V4 混乱会話</option><option value="3">V3 不適当語</option><option value="2">V2 理解不能音声</option><option value="1">V1 発語なし</option></select></div>
+                    <div class="field"><label for="gcsMotor">M 運動</label><select id="gcsMotor"><option value="">未入力</option><option value="6" selected>M6 命令に従う</option><option value="5">M5 疼痛部位認識</option><option value="4">M4 四肢を引っ込める</option><option value="3">M3 異常屈曲</option><option value="2">M2 異常伸展</option><option value="1">M1 反応なし</option></select></div>
+                    <div class="field"><label for="gcsDisplay">GCS 合計</label><input id="gcsDisplay" type="text" value="GCS E4 V4 M6 合計14点" readonly></div>
+                  </div>
+                  <input id="gcs" type="hidden" value="14">
+                </div>
+                <div class="field hidden" id="jcsField"><label for="jcs">JCS 区分</label><select id="jcs"><option value="">未入力</option><option value="0">清明（JCS 0）</option><option value="I-1">I-1: だいたい意識清明だが今ひとつはっきりしない</option><option value="I-2">I-2: 見当識障害がある</option><option value="I-3">I-3: 自分の名前・生年月日が言えない</option><option value="II-10">II-10: 普通の呼びかけで容易に開眼する</option><option value="II-20">II-20: 大きな声または体を揺さぶることで開眼する</option><option value="II-30">II-30: 痛み刺激を加えつつ呼びかけを繰り返すと開眼する</option><option value="III-100">III-100: 痛み刺激に対し払いのける動作をする</option><option value="III-200">III-200: 痛み刺激で少し手足を動かすか顔をしかめる</option><option value="III-300">III-300: 痛み刺激に反応しない</option></select></div>
+                <div class="field"><label for="sbp">収縮期血圧 SBP</label><input id="sbp" type="number" min="50" max="250" value="105"></div>
+                <div class="field"><label for="dbp">拡張期血圧 DBP</label><input id="dbp" type="number" min="30" max="150" value="64"></div>
+                <div class="field"><label for="heartRate">心拍数</label><input id="heartRate" type="number" min="30" max="200" value="98"></div>
+                <div class="field"><label for="respiratoryRate">呼吸数</label><input id="respiratoryRate" type="number" min="5" max="60" value="20"></div>
+                <div class="field"><label for="temperatureC">体温 (℃)</label><input id="temperatureC" type="number" min="34" max="42" step="0.1" value="38.0"></div>
+                <div class="field"><label for="spo2">SpO₂ (%)</label><input id="spo2" type="number" min="70" max="100" value="94"></div>
+                <div class="field"><label for="urineMode">尿量入力</label><select id="urineMode"><option value="hourly">mL/h で入力</option><option value="daily">mL/日 で入力</option></select></div>
+                <div class="field" id="urineMlHourField"><label for="urineMlHour">尿量 (mL/h)</label><input id="urineMlHour" type="number" min="0" step="1" value="30" placeholder="例: 30"></div>
+                <div class="field hidden" id="urineMlDayField"><label for="urineMlDay">24時間尿量 (mL/日)</label><input id="urineMlDay" type="number" min="0" step="1" placeholder="例: 720"></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3>身体所見</h3>
+              <div class="check-grid">
+                <label class="check"><input id="oralDry" type="checkbox" checked>口腔乾燥</label>
+                <label class="check"><input id="poorSkinTurgor" type="checkbox" checked>皮膚ツルゴール低下</label>
+                <label class="check"><input id="axillaryDry" type="checkbox">腋窩乾燥</label>
+                <label class="check"><input id="edema" type="checkbox">浮腫</label>
+                <label class="check"><input id="crackles" type="checkbox">ラ音</label>
+                <label class="check"><input id="jvd" type="checkbox">頸静脈怒張</label>
+              </div>
+              <div class="field full" style="margin-top: 12px;">
+                <label for="clinicalMemo">臨床メモ</label>
+                <textarea id="clinicalMemo">発熱があり、口渇と経口摂取低下が続いている。</textarea>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3>検査・ストレス</h3>
+              <div class="fields">
+                <div class="field"><label for="na">Na (mEq/L)</label><input id="na" type="number" min="100" max="180" step="0.1" value="150"></div>
+                <div class="field"><label for="k">K (mEq/L)</label><input id="k" type="number" min="2" max="8" step="0.1" value="4.3"></div>
+                <div class="field"><label for="cl">Cl (mEq/L)</label><input id="cl" type="number" min="70" max="130" step="0.1" value="112"></div>
+                <div class="field"><label for="bun">BUN (mg/dL)</label><input id="bun" type="number" min="0" step="0.1" value="34"></div>
+                <div class="field"><label for="cre">Cre (mg/dL)</label><input id="cre" type="number" min="0.1" step="0.01" value="1.2"></div>
+                <div class="field"><label for="glucose">Glu (mg/dL)</label><input id="glucose" type="number" min="20" step="1" value="140"></div>
+                <div class="field"><label for="tp">TP (g/dL)</label><input id="tp" type="number" min="1" step="0.1" value="7.2"></div>
+                <div class="field"><label for="alb">Alb (g/dL)</label><input id="alb" type="number" min="1" step="0.1" value="3.7"></div>
+                <div class="field"><label for="hb">Hb (g/dL)</label><input id="hb" type="number" min="1" step="0.1" value="13.2"></div>
+                <div class="field"><label for="hct">Hct (%)</label><input id="hct" type="number" min="1" max="70" step="0.1" value="47"></div>
+                <div class="field"><label for="bnp">BNP (pg/mL)</label><input id="bnp" type="number" min="0" step="1" value="110"></div>
+                <div class="field"><label for="stressFactor">ストレス係数</label><select id="stressFactor"><option value="1">1.0 安静時 / 飢餓状態</option><option value="1.1">1.1 軽度手術後</option><option value="1.2">1.2 中等度手術後 / 骨折</option><option value="1.3" selected>1.3 敗血症 / 人工呼吸管理</option><option value="1.5">1.5 重症感染症 / 多発外傷</option><option value="1.7">1.7 重度熱傷（20-40%）</option><option value="2">2.0 広範囲熱傷（>40%）</option></select></div>
+              </div>
+            </section>
+
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="runButton" type="button">判定する</button>
+            <button class="secondary" id="resetButton" type="button">初期症例へ戻す</button>
+            <button class="ghost" id="loadFirstCaseButton" type="button">仮想症例1を読込</button>
+            <button class="ghost" id="exportJsonButton" type="button">50症例 JSON 出力</button>
+            <button class="ghost" id="exportCsvButton" type="button">50症例 CSV 出力</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>判定結果</h2>
+          <p class="subtle">Criticalがあれば輸液提案を止め、即時報告を最優先表示します。WarningとInfoは理由と注意点を併記します。</p>
+        </div>
+        <div class="card-body stack" id="resultArea"></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 24px;">
+      <div class="card-head">
+        <h2>検証用の仮想症例 50例</h2>
+        <p class="subtle">高張性脱水・等張性脱水・低張性脱水・Warning重点・Critical重点を各10例ずつ生成しています。各行の「読込」でフォームへ反映し、そのまま再計算できます。</p>
+      </div>
+      <div class="card-body">
+        <div class="summary-grid" id="caseSummary"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>カテゴリ</th>
+                <th>症例概要</th>
+                <th>推定タイプ</th>
+                <th>Alert</th>
+                <th>Posm</th>
+                <th>eGFR</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="caseTableBody"></tbody>
+          </table>
+        </div>
+        <p class="footer-note">仮想症例はツール内ロジックと同じ評価関数で自動採点しています。教育用・検証用の想定データであり、実患者データではありません。</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const INITIAL_CASE = {
+      patientName: "初期症例",
+      age: 72,
+      sex: "男性",
+      heightCm: 162,
+      baselineWeightKg: 60,
+      currentWeightKg: 57,
+      baselineDate: "2026-03-01T09:00",
+      currentDate: "2026-03-05T09:00",
+      mentalStatusMode: "GCS",
+      gcsEye: 4,
+      gcsVerbal: 4,
+      gcsMotor: 6,
+      gcs: 14,
+      jcs: "",
+      sbp: 105,
+      dbp: 64,
+      heartRate: 98,
+      respiratoryRate: 20,
+      temperatureC: 38.0,
+      spo2: 94,
+      urineMode: "hourly",
+      urineMlHour: 30,
+      urineMlDay: "",
+      na: 150,
+      k: 4.3,
+      cl: 112,
+      bun: 34,
+      cre: 1.2,
+      glucose: 140,
+      tp: 7.2,
+      alb: 3.7,
+      hb: 13.2,
+      hct: 47,
+      bnp: 110,
+      stressFactor: 1.3,
+      oralDry: true,
+      poorSkinTurgor: true,
+      axillaryDry: false,
+      edema: false,
+      crackles: false,
+      jvd: false,
+      clinicalMemo: "発熱があり、口渇と経口摂取低下が続いている。"
+    };
+
+    const FIELD_IDS = [
+      "patientName", "age", "sex", "heightCm", "baselineWeightKg", "currentWeightKg",
+      "baselineDate", "currentDate", "mentalStatusMode", "gcsEye", "gcsVerbal", "gcsMotor", "gcs", "jcs", "sbp", "dbp",
+      "heartRate", "respiratoryRate", "temperatureC", "spo2", "urineMode", "urineMlHour",
+      "urineMlDay", "na", "k", "cl", "bun", "cre", "glucose", "tp", "alb", "hb", "hct",
+      "bnp", "stressFactor", "clinicalMemo"
+    ];
+
+    const CHECK_IDS = ["oralDry", "poorSkinTurgor", "axillaryDry", "edema", "crackles", "jvd"];
+    const nfmt = new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 1 });
+    const nfmt2 = new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 2 });
+
+    const resultArea = document.getElementById("resultArea");
+    const caseTableBody = document.getElementById("caseTableBody");
+    const caseSummary = document.getElementById("caseSummary");
+
+    function num(value) {
+      if (value === null || value === undefined || value === "") {
+        return null;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function fmt(value, digits = 1) {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return "―";
+      }
+      return (digits === 2 ? nfmt2 : nfmt).format(value);
+    }
+
+    function fmtSigned(value, digits = 1) {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return "―";
+      }
+      return `${value > 0 ? "+" : ""}${digits === 2 ? value.toFixed(2) : value.toFixed(1)}`;
+    }
+
+    function daysBetween(start, end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      if (Number.isNaN(startDate.valueOf()) || Number.isNaN(endDate.valueOf())) {
+        return null;
+      }
+      return Math.round((endDate - startDate) / 86400000);
+    }
+
+    function getTbwCoefficient(age, sex) {
+      if (age < 15) return 0.65;
+      if (age >= 65) return sex === "女性" ? 0.45 : 0.5;
+      if (sex === "女性") return 0.5;
+      return 0.6;
+    }
+
+    function getReferenceHct(sex) {
+      if (sex === "男性") return 45;
+      if (sex === "女性") return 40;
+      return 42;
+    }
+
+    function getGcsPreset(total) {
+      const presets = {
+        15: { eye: 4, verbal: 5, motor: 6 },
+        14: { eye: 4, verbal: 4, motor: 6 },
+        13: { eye: 3, verbal: 4, motor: 6 },
+        12: { eye: 3, verbal: 3, motor: 6 },
+        11: { eye: 3, verbal: 2, motor: 6 },
+        10: { eye: 2, verbal: 3, motor: 5 },
+        9: { eye: 2, verbal: 2, motor: 5 },
+        8: { eye: 2, verbal: 2, motor: 4 },
+        7: { eye: 2, verbal: 1, motor: 4 },
+        6: { eye: 1, verbal: 1, motor: 4 },
+        5: { eye: 1, verbal: 1, motor: 3 },
+        4: { eye: 1, verbal: 1, motor: 2 },
+        3: { eye: 1, verbal: 1, motor: 1 }
+      };
+      return presets[total] || { eye: "", verbal: "", motor: "" };
+    }
+
+    function buildGcsDisplay(eye, verbal, motor) {
+      if (![eye, verbal, motor].every((value) => value !== null && value !== "")) {
+        return "GCS 未入力";
+      }
+      const total = Number(eye) + Number(verbal) + Number(motor);
+      return `GCS E${eye} V${verbal} M${motor} 合計${total}点`;
+    }
+
+    function getInfusionPreset(product) {
+      const presets = {
+        d5w: { na: 0, k: 0, locked: true, label: "5%ブドウ糖液" },
+        saline: { na: 154, k: 0, locked: true, label: "生理食塩液（0.9% NaCl）" },
+        solacetf: { na: 130, k: 4, locked: true, label: "ソルアセトF" },
+        hypertonic3: { na: 513, k: 0, locked: true, label: "3%食塩水" },
+        kn1: { na: null, k: null, locked: false, label: "KN1号" },
+        ringer: { na: null, k: null, locked: false, label: "酢酸リンゲル液" },
+        soldem3a: { na: null, k: null, locked: false, label: "ソルデム3A" },
+        custom: { na: null, k: null, locked: false, label: "手入力" }
+      };
+      return presets[product] || presets.custom;
+    }
+
+    function inferInfusionProduct(primaryLabel) {
+      if (!primaryLabel) return "custom";
+      if (primaryLabel.includes("5%ブドウ糖")) return "d5w";
+      if (primaryLabel.includes("生理食塩液")) return "saline";
+      if (primaryLabel.includes("ソルアセトF")) return "solacetf";
+      if (primaryLabel.includes("3%食塩水")) return "hypertonic3";
+      if (primaryLabel.includes("KN1")) return "kn1";
+      if (primaryLabel.includes("酢酸リンゲル")) return "ringer";
+      if (primaryLabel.includes("ソルデム3A")) return "soldem3a";
+      return "custom";
+    }
+
+    function getStressCatabolicRate(stressFactor) {
+      if (stressFactor >= 1.7) return 0.5;
+      if (stressFactor >= 1.3) return 0.4;
+      return 0.3;
+    }
+
+    function maintenanceDaily(weightKg, age, tempC) {
+      let baseDaily;
+      if (age < 15) {
+        const tier1 = Math.min(weightKg, 10) * 4;
+        const tier2 = Math.max(Math.min(weightKg - 10, 10), 0) * 2;
+        const tier3 = Math.max(weightKg - 20, 0) * 1;
+        baseDaily = (tier1 + tier2 + tier3) * 24;
+      } else if (age >= 65) {
+        baseDaily = weightKg * 22.5;
+      } else {
+        baseDaily = weightKg * 27.5;
+      }
+      const feverFactor = tempC > 37 ? 1 + ((tempC - 37) * 0.15) : 1;
+      return {
+        baseDaily,
+        feverFactor,
+        adjustedDaily: baseDaily * feverFactor,
+        adjustedHourly: (baseDaily * feverFactor) / 24
+      };
+    }
+
+    function getUrineMlPerKgPerHour(data) {
+      const weight = data.currentWeightKg || data.baselineWeightKg;
+      if (!weight) return null;
+      if (data.urineMode === "daily" && data.urineMlDay !== null) {
+        return data.urineMlDay / 24 / weight;
+      }
+      if (data.urineMode === "hourly" && data.urineMlHour !== null) {
+        return data.urineMlHour / weight;
+      }
+      return null;
+    }
+
+    function getDehydrationSigns(data) {
+      return [data.oralDry, data.poorSkinTurgor, data.axillaryDry].filter(Boolean).length;
+    }
+
+    function getEgfrStage(egfr) {
+      if (egfr === null || egfr === undefined || Number.isNaN(egfr)) return "未判定";
+      if (egfr >= 90) return "G1（正常）";
+      if (egfr >= 60) return "G2（軽度低下）";
+      if (egfr >= 45) return "G3a（軽度〜中等度低下）";
+      if (egfr >= 30) return "G3b（中等度〜高度低下）";
+      if (egfr >= 15) return "G4（高度低下）";
+      return "G5（末期腎不全）";
+    }
+
+    function getFluidPlan(type, egfr, warnings) {
+      const hasVolumeOverload = warnings.some((item) => item.code === "severe_hf" || item.code === "dilutional_hypona");
+      if (hasVolumeOverload) {
+        return {
+          primary: "安易な補液は避け、水制限と医師コンサルトを優先",
+          secondary: "循環動態・肺水腫所見を再評価",
+          note: "浮腫・ラ音・BNP高値を伴うため、通常の脱水プロトコルは適しません。"
+        };
+      }
+      if (type === "高張性脱水（水欠乏型）") {
+        return {
+          primary: "5%ブドウ糖液",
+          secondary: "KN1号液",
+          note: "自由水補給を意識しつつ、慢性高Na血症なら 0.5 mEq/L/h 以下で補正します。"
+        };
+      }
+      if (type === "低張性脱水（Na欠乏型）") {
+        return {
+          primary: "生理食塩液",
+          secondary: "酢酸リンゲル液",
+          note: "低Na血症では急速補正を避け、症候性なら医師へ即相談します。"
+        };
+      }
+      return {
+        primary: "酢酸リンゲル液",
+        secondary: egfr !== null && egfr > 30 ? "ソルデム3A" : "K含有輸液は慎重投与",
+        note: "等張性脱水では循環血液量回復を優先し、尿量・血圧反応を追跡します。"
+      };
+    }
+
+    function getProtocolText(type, data, averageDeficit) {
+      if (type === "高張性脱水（水欠乏型）") {
+        return [
+          `初日24時間は欠乏量 ${averageDeficit !== null ? fmt(averageDeficit) : "―"} mL の 1/3 を上限目安に補正します。`,
+          "第1選択は 5%ブドウ糖液、第2選択は KN1号です。",
+          "Na補正速度は慢性高Na血症なら 0.5 mEq/L/h 以下、24時間 8-10 mEq/L 以下を目標にします。",
+          "再評価は 4時間後にバイタル・尿量、8時間後にNa、24時間後に全身評価です。"
+        ];
+      }
+      if (type === "低張性脱水（Na欠乏型）") {
+        return [
+          "SBP が 90 未満なら CRITICAL として医師へ即報告します。",
+          "SBP が保たれていれば、生理食塩液 500mL を30分で投与する初期負荷を検討します。",
+          "維持期は酢酸リンゲル液 100mL/h を参考にします。",
+          "Na < 125 または神経症状があれば 3%食塩水の検討を医師へ依頼します。"
+        ];
+      }
+      return [
+        "急性期で循環動態が不安定なら酢酸リンゲル液 500-1000mL の急速投与を検討します。",
+        `維持期は ${egfrAwareSecondChoice(data)} を含め 100-150mL/h を参考にします。`,
+        "原因鑑別として出血、下痢、嘔吐、腹腔内貯留、サードスペースを確認します。",
+        "尿量・血圧反応をみて継続可否を再判断します。"
+      ];
+    }
+
+    function egfrAwareSecondChoice(data) {
+      const egfr = (data.age && data.cre) ? 194 * Math.pow(data.cre, -1.094) * Math.pow(data.age, -0.287) * (data.sex === "女性" ? 0.739 : 1) : null;
+      return egfr !== null && egfr > 30 ? "ソルデム3A" : "K含有輸液を避けた平衡液";
+    }
+
+    function collectFormData() {
+      const data = {};
+      FIELD_IDS.forEach((id) => {
+        data[id] = document.getElementById(id).value;
+      });
+      CHECK_IDS.forEach((id) => {
+        data[id] = document.getElementById(id).checked;
+      });
+      data.age = num(data.age);
+      data.heightCm = num(data.heightCm);
+      data.baselineWeightKg = num(data.baselineWeightKg);
+      data.currentWeightKg = num(data.currentWeightKg);
+      data.gcsEye = num(data.gcsEye);
+      data.gcsVerbal = num(data.gcsVerbal);
+      data.gcsMotor = num(data.gcsMotor);
+      data.gcs = num(data.gcs);
+      data.sbp = num(data.sbp);
+      data.dbp = num(data.dbp);
+      data.heartRate = num(data.heartRate);
+      data.respiratoryRate = num(data.respiratoryRate);
+      data.temperatureC = num(data.temperatureC);
+      data.spo2 = num(data.spo2);
+      data.urineMlHour = num(data.urineMlHour);
+      data.urineMlDay = num(data.urineMlDay);
+      data.na = num(data.na);
+      data.k = num(data.k);
+      data.cl = num(data.cl);
+      data.bun = num(data.bun);
+      data.cre = num(data.cre);
+      data.glucose = num(data.glucose);
+      data.tp = num(data.tp);
+      data.alb = num(data.alb);
+      data.hb = num(data.hb);
+      data.hct = num(data.hct);
+      data.bnp = num(data.bnp);
+      data.stressFactor = num(data.stressFactor);
+      if (data.mentalStatusMode === "GCS") {
+        data.gcs = data.gcsEye !== null && data.gcsVerbal !== null && data.gcsMotor !== null
+          ? data.gcsEye + data.gcsVerbal + data.gcsMotor
+          : null;
+      }
+      return data;
+    }
+
+    function fillForm(data) {
+      const normalized = { ...data };
+      if ((normalized.gcsEye === undefined || normalized.gcsVerbal === undefined || normalized.gcsMotor === undefined) && normalized.gcs !== undefined && normalized.gcs !== null && normalized.gcs !== "") {
+        const preset = getGcsPreset(Number(normalized.gcs));
+        normalized.gcsEye = preset.eye;
+        normalized.gcsVerbal = preset.verbal;
+        normalized.gcsMotor = preset.motor;
+      }
+      FIELD_IDS.forEach((id) => {
+        document.getElementById(id).value = normalized[id] ?? "";
+      });
+      CHECK_IDS.forEach((id) => {
+        document.getElementById(id).checked = Boolean(normalized[id]);
+      });
+      syncConditionalFields();
+    }
+
+    function syncConditionalFields() {
+      const mentalMode = document.getElementById("mentalStatusMode").value;
+      const urineMode = document.getElementById("urineMode").value;
+      const gcsField = document.getElementById("gcsField");
+      const jcsField = document.getElementById("jcsField");
+      const gcs = document.getElementById("gcs");
+      const gcsEye = document.getElementById("gcsEye");
+      const gcsVerbal = document.getElementById("gcsVerbal");
+      const gcsMotor = document.getElementById("gcsMotor");
+      const gcsDisplay = document.getElementById("gcsDisplay");
+      const jcs = document.getElementById("jcs");
+      const urineHourField = document.getElementById("urineMlHourField");
+      const urineDayField = document.getElementById("urineMlDayField");
+      const urineHour = document.getElementById("urineMlHour");
+      const urineDay = document.getElementById("urineMlDay");
+
+      gcsField.classList.toggle("hidden", mentalMode !== "GCS");
+      jcsField.classList.toggle("hidden", mentalMode !== "JCS");
+      gcs.disabled = mentalMode !== "GCS";
+      gcsEye.disabled = mentalMode !== "GCS";
+      gcsVerbal.disabled = mentalMode !== "GCS";
+      gcsMotor.disabled = mentalMode !== "GCS";
+      jcs.disabled = mentalMode !== "JCS";
+      const gcsTotal = [gcsEye.value, gcsVerbal.value, gcsMotor.value].every(Boolean)
+        ? Number(gcsEye.value) + Number(gcsVerbal.value) + Number(gcsMotor.value)
+        : "";
+      gcs.value = gcsTotal;
+      gcsDisplay.value = buildGcsDisplay(gcsEye.value, gcsVerbal.value, gcsMotor.value);
+      if (mentalMode === "GCS") {
+        jcs.value = "";
+      } else {
+        gcs.value = "";
+        gcsDisplay.value = "GCS 未入力";
+      }
+
+      urineHourField.classList.toggle("hidden", urineMode !== "hourly");
+      urineDayField.classList.toggle("hidden", urineMode !== "daily");
+      urineHour.disabled = urineMode !== "hourly";
+      urineDay.disabled = urineMode !== "daily";
+      if (urineMode === "hourly") {
+        urineDay.value = "";
+      } else {
+        urineHour.value = "";
+      }
+    }
+
+    function validateRanges(data) {
+      const errors = [];
+      const warnings = [];
+      const now = new Date("2026-03-12T23:59");
+
+      [
+        ["年齢", data.age], ["身長", data.heightCm], ["通常時体重", data.baselineWeightKg],
+        ["現体重", data.currentWeightKg], ["SBP", data.sbp], ["DBP", data.dbp],
+        ["心拍数", data.heartRate], ["呼吸数", data.respiratoryRate], ["体温", data.temperatureC],
+        ["SpO2", data.spo2], ["Na", data.na], ["K", data.k], ["Cl", data.cl], ["BUN", data.bun],
+        ["Cre", data.cre], ["Glu", data.glucose], ["TP", data.tp], ["Hct", data.hct], ["ストレス係数", data.stressFactor]
+      ].forEach(([label, value]) => {
+        if (value === null || value === "") errors.push(`${label} が未入力です。`);
+      });
+
+      [
+        ["身長", data.heightCm, 50, 250], ["通常時体重", data.baselineWeightKg, 20, 300],
+        ["現体重", data.currentWeightKg, 20, 300], ["SBP", data.sbp, 50, 250],
+        ["DBP", data.dbp, 30, 150], ["心拍数", data.heartRate, 30, 200],
+        ["呼吸数", data.respiratoryRate, 5, 60], ["体温", data.temperatureC, 34, 42],
+        ["SpO2", data.spo2, 70, 100], ["Na", data.na, 100, 180], ["K", data.k, 2, 8],
+        ["Cl", data.cl, 70, 130]
+      ].forEach(([label, value, min, max]) => {
+        if (value !== null && (value < min || value > max)) errors.push(`${label} が仕様範囲外です。(${min}-${max})`);
+      });
+
+      const baselineDate = new Date(data.baselineDate);
+      const currentDate = new Date(data.currentDate);
+      if (Number.isNaN(baselineDate.valueOf()) || Number.isNaN(currentDate.valueOf())) {
+        errors.push("測定日時の形式が不正です。");
+      } else {
+        if (baselineDate > now || currentDate > now) errors.push("測定日時に未来日があります。");
+        if (currentDate < baselineDate) errors.push("現体重測定日時が通常時測定日時より前です。");
+      }
+
+      if (data.currentWeightKg !== null && data.baselineWeightKg !== null && data.currentWeightKg > data.baselineWeightKg && getDehydrationSigns(data) >= 2) {
+        warnings.push("現体重が通常時体重より重い一方で脱水所見が複数あります。溢水や測定誤差も確認してください。");
+      }
+
+      return { errors, warnings };
+    }
+
+    function evaluateCase(input) {
+      const data = { ...input };
+      const validation = validateRanges(data);
+      const criticals = [];
+      const warnings = [];
+      const infos = [];
+      const reasoning = [];
+
+      const days = daysBetween(data.baselineDate, data.currentDate);
+      const deltaWeight = data.baselineWeightKg !== null && data.currentWeightKg !== null ? data.baselineWeightKg - data.currentWeightKg : null;
+      const tbwCoef = data.age !== null && data.sex ? getTbwCoefficient(data.age, data.sex) : null;
+      const shockIndex = data.sbp ? data.heartRate / data.sbp : null;
+      const egfr = (data.age && data.cre) ? 194 * Math.pow(data.cre, -1.094) * Math.pow(data.age, -0.287) * (data.sex === "女性" ? 0.739 : 1) : null;
+      const egfrStage = getEgfrStage(egfr);
+      const bunCre = data.cre ? data.bun / data.cre : null;
+      const posm = (data.na !== null && data.glucose !== null && data.bun !== null) ? (2 * data.na) + (data.glucose / 18) + (data.bun / 2.8) : null;
+      const urinePerKgPerHour = getUrineMlPerKgPerHour(data);
+      const hctRef = getReferenceHct(data.sex);
+
+      if (data.sbp !== null && data.sbp < 90) criticals.push({ code: "shock_sbp", message: "ショックの疑い。SBP < 90 のため直ちに医師へ報告してください。" });
+      if (shockIndex !== null && shockIndex > 1.0) criticals.push({ code: "shock_index", message: `ショック指数 ${fmt(shockIndex, 2)}。循環動態が不安定です。` });
+      if (data.k !== null && data.k > 6.0) criticals.push({ code: "severe_hyperkalemia", message: "重度高K血症です。緊急対応が必要です。" });
+      if (data.k !== null && data.k < 2.5) criticals.push({ code: "severe_hypokalemia", message: "重度低K血症です。不整脈リスクがあります。" });
+      if (egfr !== null && egfr < 15) criticals.push({ code: "egfr_critical", message: `eGFR ${fmt(egfr)}（${egfrStage}）。透析適応を含めて即相談が必要です。` });
+      if ((data.urineMode === "daily" && data.urineMlDay !== null && data.urineMlDay < 100) || (data.urineMode === "hourly" && data.urineMlHour !== null && (data.urineMlHour * 24) < 100)) {
+        criticals.push({ code: "anuria", message: "無尿状態です。腎後性・腎性の鑑別を優先してください。" });
+      }
+      if (data.spo2 !== null && data.spo2 < 88) criticals.push({ code: "resp_failure", message: "SpO₂ < 88%。呼吸管理を優先してください。" });
+      if (data.glucose !== null && data.glucose > 500) criticals.push({ code: "hyperglycemic_crisis", message: "高血糖緊急症の可能性があります。専門的治療が必要です。" });
+      if (data.na !== null && data.na < 120) criticals.push({ code: "severe_hypona", message: "重度低Na血症です。急速補正によるODSに注意してください。" });
+      if (data.na !== null && data.na > 160) criticals.push({ code: "severe_hyperna", message: "重度高Na血症です。脳障害リスクに注意が必要です。" });
+      if ((data.mentalStatusMode === "GCS" && data.gcs !== null && data.gcs < 12) || (data.mentalStatusMode === "JCS" && typeof data.jcs === "string" && (data.jcs.startsWith("II") || data.jcs.startsWith("III")))) {
+        criticals.push({ code: "mental_status", message: "意識障害あり。原因検索と全身管理を優先してください。" });
+      }
+
+      if (egfr !== null && egfr >= 15 && egfr < 30) warnings.push({ code: "egfr_warning", message: `eGFR ${fmt(egfr)}（${egfrStage}）。投与量を通常の 50-75% に減量し、4-6時間ごとに再評価します。` });
+      if (data.bnp !== null && data.bnp > 500) warnings.push({ code: "severe_hf", message: `BNP ${fmt(data.bnp)}。重症心不全リスクが高く、輸液制限が必要です。` });
+      else if (data.bnp !== null && data.bnp >= 200) warnings.push({ code: "hf_risk", message: `BNP ${fmt(data.bnp)}。心不全リスクがあり、輸液量を通常の 50-75% に制限します。` });
+      if (data.edema && data.crackles) warnings.push({ code: "severe_hf_signs", message: "浮腫とラ音を認めます。溢水評価を優先してください。" });
+      if (data.na !== null && data.na < 135 && (data.edema || (data.bnp !== null && data.bnp > 200))) warnings.push({ code: "dilutional_hypona", message: "希釈性低Na血症の可能性があります。水制限を優先し、安易な補液は避けます。" });
+      if (data.k !== null && data.k > 5.5 && data.k <= 6.0) warnings.push({ code: "moderate_hyperkalemia", message: "中等度高K血症です。K含有輸液は使用しません。" });
+      if (urinePerKgPerHour !== null && urinePerKgPerHour > 0.5 && urinePerKgPerHour < 1.0) warnings.push({ code: "oliguria", message: `尿量 ${fmt(urinePerKgPerHour, 2)} mL/kg/h。乏尿域で、腎前性・腎性・腎後性の鑑別が必要です。` });
+      if (data.glucose !== null && data.glucose > 250 && data.glucose <= 500) warnings.push({ code: "moderate_hyperglycemia", message: `Glu ${fmt(data.glucose)}。インスリン併用の検討が必要です。` });
+
+      if ((data.na !== null && data.na >= 135 && data.na <= 138) || (data.k !== null && data.k >= 3.5 && data.k <= 3.8)) infos.push("軽度電解質異常です。急性変化の有無を確認してください。");
+      if (egfr !== null && egfr >= 30 && egfr < 60) infos.push("軽度〜中等度の腎機能低下があります。");
+      if (getDehydrationSigns(data) >= 2) infos.push("身体所見として軽度以上の脱水所見がそろっています。");
+
+      let weightLossType = "未判定";
+      let tissueLossKg = null;
+      let adjustedWeightLossKg = null;
+      const implausibleWeightLoss = deltaWeight !== null && data.baselineWeightKg !== null && days !== null && days <= 7 && deltaWeight > Math.max(10, data.baselineWeightKg * 0.15);
+      if (days !== null && deltaWeight !== null) {
+        if (days <= 3) {
+          weightLossType = "急性（水分喪失主体）";
+          tissueLossKg = 0;
+          adjustedWeightLossKg = Math.max(deltaWeight, 0);
+          reasoning.push(`体重差 ${fmt(deltaWeight)} kg が ${days} 日で発生しているため、急性の水分喪失主体と判断しました。`);
+        } else if (days <= 7) {
+          weightLossType = "亜急性（混合型）";
+          tissueLossKg = getStressCatabolicRate(data.stressFactor) * Math.min(days, 7);
+          adjustedWeightLossKg = Math.max(deltaWeight - tissueLossKg, 0);
+          reasoning.push(`体重差 ${fmt(deltaWeight)} kg は ${days} 日の亜急性変化です。組織異化 ${fmt(tissueLossKg)} kg を差し引き、水分欠乏は ${fmt(adjustedWeightLossKg)} kg 相当とみなしました。`);
+        } else {
+          weightLossType = "慢性（組織減少主体）";
+          tissueLossKg = getStressCatabolicRate(data.stressFactor) * 7;
+          reasoning.push("7日を超える体重減少のため、体重差からの欠乏量推定は無効化しました。");
+        }
+      }
+      if (implausibleWeightLoss) {
+        adjustedWeightLossKg = null;
+        warnings.push({ code: "implausible_weight_loss", message: `短期間で ${fmt(deltaWeight)} kg の体重差は水分欠乏だけでは説明困難です。体重法は無効化し、測定誤差・浮腫・栄養障害を再確認してください。` });
+        reasoning.push("極端な体重差のため、体重法による欠乏量推定を安全側で除外しました。");
+      }
+
+      let dehydrationType = "判定不可";
+      let pathophysiology = "入力不足";
+      if (posm !== null) {
+        if (posm > 295) {
+          dehydrationType = "高張性脱水（水欠乏型）";
+          pathophysiology = "細胞内脱水";
+          reasoning.push(`Posm ${fmt(posm)} mOsm/L > 295 のため、高張性脱水と判定しました。`);
+        } else if (posm < 285) {
+          dehydrationType = "低張性脱水（Na欠乏型）";
+          pathophysiology = "細胞外液減少 + 細胞内浮腫";
+          reasoning.push(`Posm ${fmt(posm)} mOsm/L < 285 のため、低張性脱水と判定しました。`);
+        } else {
+          dehydrationType = "等張性脱水（混合型）";
+          pathophysiology = "細胞外液減少";
+          reasoning.push(`Posm ${fmt(posm)} mOsm/L が 285-295 のため、等張性脱水と判定しました。`);
+        }
+      }
+
+      const deficitWeight = adjustedWeightLossKg === null ? null : adjustedWeightLossKg * 1000;
+      const deficitNa = (data.na !== null && data.na > 145 && data.baselineWeightKg !== null && tbwCoef !== null) ? (1 - (140 / data.na)) * data.baselineWeightKg * tbwCoef * 1000 : null;
+      const deficitHct = (data.hct !== null && data.baselineWeightKg !== null && tbwCoef !== null) ? (1 - (hctRef / data.hct)) * data.baselineWeightKg * tbwCoef * 1000 : null;
+      const deficitTp = (data.tp !== null && data.baselineWeightKg !== null && tbwCoef !== null) ? ((data.tp / 7.0) - 1) * data.baselineWeightKg * tbwCoef * 1000 : null;
+      const positiveDeficits = [deficitWeight, deficitNa, deficitHct, deficitTp].filter((value) => value !== null && value > 0);
+      const averageDeficit = positiveDeficits.length ? positiveDeficits.reduce((sum, value) => sum + value, 0) / positiveDeficits.length : null;
+      const divergence = averageDeficit !== null && positiveDeficits.length > 1 ? ((Math.max(...positiveDeficits) - Math.min(...positiveDeficits)) / averageDeficit) * 100 : null;
+      if (divergence !== null && divergence >= 20) warnings.push({ code: "divergence", message: `欠乏量推定法の乖離が ${fmt(divergence)}% あります。身体所見を最優先してください。` });
+
+      if (bunCre !== null) {
+        if (bunCre > 20) reasoning.push(`BUN/Cre 比 ${fmt(bunCre, 2)} で腎前性要素を示します。`);
+        else if (bunCre < 10) reasoning.push(`BUN/Cre 比 ${fmt(bunCre, 2)} で低栄養・肝不全・過剰輸液も鑑別に入ります。`);
+      }
+      if (data.hct !== null) {
+        if ((data.sex === "男性" && data.hct > 50) || (data.sex === "女性" && data.hct > 45)) reasoning.push("Hct上昇があり、血液濃縮から血管内脱水を支持します。");
+        else if ((data.sex === "男性" && data.hct < 40) || (data.sex === "女性" && data.hct < 36)) reasoning.push("Hct低下があり、貧血・出血・過剰輸液の可能性を考慮します。");
+      }
+
+      const maintenance = maintenanceDaily(data.currentWeightKg, data.age, data.temperatureC);
+      const fluidPlan = getFluidPlan(dehydrationType, egfr, warnings);
+      const inferredInfusionProduct = inferInfusionProduct(fluidPlan.primary);
+      const infusionPreset = getInfusionPreset(inferredInfusionProduct);
+      const infusionVolumeDaily = 1000;
+      const infusionNa = infusionPreset.na;
+      const infusionK = infusionPreset.k;
+      const tbw = data.currentWeightKg !== null && tbwCoef !== null ? data.currentWeightKg * tbwCoef : null;
+      const adroguePerLiter = (tbw !== null && data.na !== null && infusionNa !== null && infusionK !== null)
+        ? ((infusionNa + infusionK) - data.na) / (tbw + 1)
+        : null;
+      const naChange24h = (adroguePerLiter !== null)
+        ? adroguePerLiter * (infusionVolumeDaily / 1000)
+        : null;
+      const naChangeHourly = naChange24h !== null ? Math.abs(naChange24h) / 24 : null;
+      const dysnatremiaIsChronic = days !== null ? days >= 2 : true;
+      let naSafety = "入力不足";
+      if (naChangeHourly !== null) {
+        const limit = dysnatremiaIsChronic ? 0.5 : 1.0;
+        if (naChangeHourly <= limit) naSafety = `安全範囲内（${limit} mEq/L/h 以下）`;
+        else if (naChangeHourly <= 1.0) naSafety = "要注意（0.5-1.0 mEq/L/h）";
+        else naSafety = "危険（1.0 mEq/L/h 超）";
+      }
+
+      const overallLevel = criticals.length ? "CRITICAL" : warnings.length ? "WARNING" : infos.length ? "INFO" : "NONE";
+
+      return {
+        data, validation, criticals, warnings, infos, reasoning, overallLevel,
+        derived: {
+          days, deltaWeight, tbwCoef, shockIndex, egfr, egfrStage, bunCre, posm, urinePerKgPerHour,
+          weightLossType, tissueLossKg, adjustedWeightLossKg, dehydrationType, pathophysiology,
+          deficitWeight, deficitNa, deficitHct, deficitTp, averageDeficit, divergence,
+          maintenance, tbw, adroguePerLiter, naChange24h, naChangeHourly, naSafety, fluidPlan,
+          infusionProductUsed: inferredInfusionProduct, infusionLabelUsed: infusionPreset.label,
+          infusionNaUsed: infusionNa, infusionKUsed: infusionK, infusionVolumeDailyUsed: infusionVolumeDaily
+        }
+      };
+    }
+
+    function renderResult(result) {
+      const { validation, criticals, warnings, infos, reasoning, derived, overallLevel } = result;
+      const levelLabel = overallLevel === "NONE" ? "安全情報のみ" : overallLevel;
+      const deficitDay1 = derived.averageDeficit !== null ? Math.round(derived.averageDeficit / 3) : 0;
+      const deficitDay2 = derived.averageDeficit !== null ? Math.round(derived.averageDeficit - deficitDay1) : 0;
+      const deficitDay3 = 0;
+      const maintDaily = Math.round(derived.maintenance.adjustedDaily || 0);
+      const rows = [
+        { day: "Day 1", deficit: deficitDay1, maintain: maintDaily, note: "欠乏量の1/3から開始" },
+        { day: "Day 2", deficit: deficitDay2, maintain: maintDaily, note: "残り欠乏量を上乗せ" },
+        { day: "Day 3", deficit: deficitDay3, maintain: maintDaily, note: "維持中心・再評価で調整" }
+      ].map((row) => ({
+        ...row,
+        total: row.deficit + row.maintain,
+        rate: Math.round((row.deficit + row.maintain) / 24)
+      }));
+      const total3Days = rows.reduce((sum, row) => sum + row.total, 0);
+
+      let html = `<div class="output-sheet">`;
+
+      if (validation.errors.length) {
+        html += `<section class="sheet-alert critical"><strong>入力エラー</strong><ul>${validation.errors.map((item) => `<li>${item}</li>`).join("")}</ul></section>`;
+      }
+      if (criticals.length) {
+        html += `<section class="sheet-alert critical"><strong>Critical 警告</strong><ul>${criticals.map((item) => `<li>${item.message}</li>`).join("")}</ul></section>`;
+      }
+      if (!criticals.length && warnings.length) {
+        html += `<section class="sheet-alert warning"><strong>Warning</strong><ul>${warnings.map((item) => `<li>${item.message}</li>`).join("")}</ul></section>`;
+      }
+      if (!criticals.length && !warnings.length && infos.length) {
+        html += `<section class="sheet-alert info"><strong>Info</strong><ul>${infos.map((item) => `<li>${item}</li>`).join("")}</ul></section>`;
+      }
+
+      html += `
+        <section class="band-section">
+          <div class="band-title blue">▶ 維持輸液量（基本 + 発熱補正）</div>
+          <div class="band-body">
+            <table class="calc-table">
+              <tr><th>維持輸液量（基本）</th><td class="value">${fmt(derived.maintenance.baseDaily)} mL/日（${fmt(derived.maintenance.baseDaily / 24)} mL/h）</td><td class="note">${result.data.age < 15 ? "Hollidayの法則" : result.data.age >= 65 ? "高齢者 22.5mL/kg/日" : "成人 27.5mL/kg/日"}</td></tr>
+              <tr><th>発熱補正係数</th><td class="value">${fmt(derived.maintenance.feverFactor, 2)}</td><td class="note">37℃以上で 1℃ごとに +15%</td></tr>
+              <tr><th>維持輸液量（補正後）</th><td class="value">${fmt(derived.maintenance.adjustedDaily)} mL/日（${fmt(derived.maintenance.adjustedHourly)} mL/h）</td><td class="note">体温 ${fmt(result.data.temperatureC)} ℃ を反映</td></tr>
+            </table>
+          </div>
+        </section>
+      `;
+
+      if (!criticals.length && !validation.errors.length) {
+        html += `
+          <section class="band-section">
+            <div class="band-title green">▶ 推奨輸液プロトコル（参考）</div>
+            <div class="band-body">
+              <table class="calc-table">
+                <tr><th>第1選択製剤</th><td class="value">${derived.fluidPlan.primary}</td><td class="note">${derived.dehydrationType}</td></tr>
+                <tr><th>第2選択製剤</th><td class="value">${derived.fluidPlan.secondary}</td><td class="note">eGFR・K含有条件を反映</td></tr>
+              </table>
+              <div class="table-wrap" style="border:none;border-radius:0;">
+                <table class="protocol-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>欠乏補正</th>
+                      <th>維持輸液</th>
+                      <th>合計</th>
+                      <th>投与速度</th>
+                      <th>備考</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows.map((row) => `<tr><td>${row.day}</td><td>${fmt(row.deficit)} mL</td><td>${fmt(row.maintain)} mL</td><td>${fmt(row.total)} mL</td><td>${fmt(row.rate)} mL/h</td><td style="text-align:left;">${row.note}</td></tr>`).join("")}
+                  </tbody>
+                  <tfoot>
+                    <tr><td>3日合計</td><td>${fmt(deficitDay1 + deficitDay2 + deficitDay3)} mL</td><td>${fmt(maintDaily * 3)} mL</td><td>${fmt(total3Days)} mL</td><td>―</td><td style="text-align:left;">症状・検査値で適宜再評価</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+              <div class="protocol-note">${getProtocolText(derived.dehydrationType, result.data, derived.averageDeficit).join(" / ")}</div>
+            </div>
+          </section>
+        `;
+      }
+
+      html += `
+        <section class="band-section">
+          <div class="band-title orange">▶ Na補正速度安全計算（Adrogue-Madias式）</div>
+          <div class="band-body orange-body">
+            <table class="calc-table">
+              <tr><th>TBW (Total Body Water)</th><td class="value">${derived.tbw !== null ? `${fmt(derived.tbw)} L` : "―"}</td><td class="note">体重 × TBW係数</td></tr>
+              <tr><th>使用製剤</th><td class="value">${derived.infusionLabelUsed}</td><td class="note">Na ${fmt(derived.infusionNaUsed)} mEq/L / K ${fmt(derived.infusionKUsed)} mEq/L</td></tr>
+              <tr><th>1LあたりNa変化量</th><td class="value">${derived.adroguePerLiter !== null ? `${fmtSigned(derived.adroguePerLiter, 2)} mEq/L` : "―"}</td><td class="note">([Na]+[K]-血清Na)/(TBW+1)</td></tr>
+              <tr><th>1時間あたりNa変化速度</th><td class="value">${derived.naChangeHourly !== null ? `${fmt(derived.naChangeHourly, 2)} mEq/L/h` : "―"}</td><td class="note">標準参照量 ${fmt(derived.infusionVolumeDailyUsed)} mL/日 を反映</td></tr>
+              <tr><th>安全性評価</th><td class="value orange-emphasis">${derived.naSafety}</td><td class="note">${derived.naChangeHourly !== null ? "慢性例は 0.5mEq/L/h 以下を厳守" : "入力不足"}</td></tr>
+            </table>
+          </div>
+        </section>
+      `;
+
+      html += `
+        <section class="sheet-alert info">
+          <strong>総合判定</strong><br>
+          ${levelLabel} / ${derived.dehydrationType} / ${derived.pathophysiology}<br>
+          体重減少の質: ${derived.weightLossType} / Posm: ${fmt(derived.posm)} / eGFR: ${fmt(derived.egfr)}（${derived.egfrStage}）
+        </section>
+        <section class="sheet-alert info">
+          <strong>判定理由</strong><ul>${reasoning.length ? reasoning.map((item) => `<li>${item}</li>`).join("") : "<li>入力不足のため十分な判定理由を生成できませんでした。</li>"}</ul>
+        </section>
+      `;
+
+      html += `</div>`;
+      resultArea.innerHTML = html;
+    }
+
+    function renderResult(result) {
+      const { validation, criticals, warnings, infos, reasoning, derived } = result;
+      const deficitDay1 = derived.averageDeficit !== null ? Math.round(derived.averageDeficit / 3) : 0;
+      const deficitDay2 = derived.averageDeficit !== null ? Math.round(derived.averageDeficit - deficitDay1) : 0;
+      const deficitDay3 = 0;
+      const maintDaily = Math.round(derived.maintenance.adjustedDaily || 0);
+      const rows = [
+        { day: "Day 1", deficit: deficitDay1, maintain: maintDaily, note: "欠乏量の1/3から開始" },
+        { day: "Day 2", deficit: deficitDay2, maintain: maintDaily, note: "残り2/3を補正・Na再評価" },
+        { day: "Day 3", deficit: deficitDay3, maintain: maintDaily, note: "維持のみ・経口移行検討" }
+      ].map((row) => ({
+        ...row,
+        total: row.deficit + row.maintain,
+        rate: Math.round((row.deficit + row.maintain) / 24)
+      }));
+      const total3Days = rows.reduce((sum, row) => sum + row.total, 0);
+      const bunCreText = derived.bunCre === null
+        ? "未計算"
+        : derived.bunCre > 20
+          ? `${fmt(derived.bunCre, 1)}（腎前性要素あり）`
+          : derived.bunCre < 10
+            ? `${fmt(derived.bunCre, 1)}（低栄養・過剰輸液も考慮）`
+            : `${fmt(derived.bunCre, 1)}`;
+      const criticalLabel = criticals.length ? `☑ ${criticals[0].message}` : "☑ CRITICALアラートなし";
+      const warningLabel = warnings.length ? `☑ ${warnings[0].message}` : "☑ WARNINGなし";
+      const discrepancyText = derived.divergence !== null && derived.divergence >= 20
+        ? `△ 各計算法に ${fmt(derived.divergence, 1)}% の乖離あり。身体所見を優先してください。`
+        : "△ 各計算法の乖離は許容範囲です。";
+      const monitoringRows = [
+        { label: "2時間ごと", value: "バイタルサイン・神経学的所見（意識・運動麻痺）" },
+        { label: "4時間ごと", value: "血清Na再検査・尿量評価" },
+        { label: "8時間ごと", value: "全身評価・輸液速度調整" },
+        { label: "24時間後", value: "総合評価・血液検査全般・プロトコル見直し" }
+      ];
+
+      let html = `<div class="output-sheet">`;
+      html += `<div class="result-header">水分管理　判定結果</div>`;
+      html += `<div class="result-subnote">※ 最終投与量・投与開始は必ず医師の指示に基づくこと</div>`;
+      html += `<div class="status-strip critical ${criticals.length ? "" : "none"}">${criticalLabel}</div>`;
+      html += `<div class="status-strip warning ${warnings.length ? "" : "none"}">${warningLabel}</div>`;
+
+      if (validation.errors.length) {
+        html += `<section class="sheet-alert critical"><strong>入力エラー</strong><ul>${validation.errors.map((item) => `<li>${item}</li>`).join("")}</ul></section>`;
+      }
+
+      html += `
+        <section class="band-section">
+          <div class="band-title blue">▶ 総合判定（血清浸透圧・脱水タイプ）</div>
+          <div class="band-body">
+            <table class="calc-table">
+              <tr><th>脱水タイプ</th><td class="value">${derived.dehydrationType}</td><td class="note"></td></tr>
+              <tr><th>主病態</th><td class="value">${derived.pathophysiology}</td><td class="note"></td></tr>
+              <tr><th>血清浸透圧</th><td class="value">${fmt(derived.posm, 1)} mOsm/L</td><td class="note">正常: 285〜295</td></tr>
+              <tr><th>BUN/Cre比</th><td class="value">${bunCreText}</td><td class="note"></td></tr>
+              <tr><th>eGFR / CKDステージ</th><td class="value">${fmt(derived.egfr, 1)} mL/分/1.73m² ${derived.egfrStage}</td><td class="note"></td></tr>
+              <tr><th>ショック指数</th><td class="value">${fmt(derived.shockIndex, 2)}</td><td class="note">&gt;1.0: CRITICAL</td></tr>
+            </table>
+          </div>
+        </section>
+        <section class="band-section">
+          <div class="band-title" style="background:#3f7fc0;">▶ 体重減少の質的判定</div>
+          <div class="band-body">
+            <table class="calc-table">
+              <tr><th>判定区分</th><td class="value">${derived.weightLossType}</td><td class="note"></td></tr>
+              <tr><th>組織異化推定</th><td class="value">${fmt(derived.tissueLossKg, 1)} kg${derived.days !== null ? `（${fmt(derived.days, 0)}日間補正）` : ""}</td><td class="note"></td></tr>
+              <tr><th>水分欠乏推定（補正後）</th><td class="value">${derived.adjustedWeightLossKg !== null ? `${fmt(derived.adjustedWeightLossKg, 1)} kg` : "適用外"}</td><td class="note">${derived.days > 7 ? "慢性（>7日）は体重法適用外" : ""}</td></tr>
+            </table>
+          </div>
+        </section>
+        <section class="band-section">
+          <div class="band-title blue">▶ 欠乏量推定（4方式クロスチェック）</div>
+          <div class="band-body">
+            <table class="calc-table">
+              <tr><th>①体重法</th><td class="value">${fmt(derived.deficitWeight)} mL</td><td class="note">急性期（≤3日）で信頼性高</td></tr>
+              <tr><th>②Na法（高Na時）</th><td class="value">${fmt(derived.deficitNa)} mL</td><td class="note">Na&gt;145で適用・信頼性高</td></tr>
+              <tr><th>③Hct法</th><td class="value">${fmt(derived.deficitHct)} mL</td><td class="note">貧血・出血時は過小評価</td></tr>
+              <tr><th>④TP法</th><td class="value">${fmt(derived.deficitTp)} mL</td><td class="note">低栄養・肝硬変時は適用外</td></tr>
+            </table>
+            <div class="recommend-box">【推奨参考値】${fmt(Math.round(derived.averageDeficit || 0))} mL（使用可能方式の平均）　通常この値の1/2〜1/3から投与開始</div>
+            <div class="warn-line">${discrepancyText}</div>
+          </div>
+        </section>
+        <section class="band-section">
+          <div class="band-title blue">▶ 維持輸液量（基本＋発熱補正）</div>
+          <div class="band-body">
+            <table class="calc-table">
+              <tr><th>維持輸液量（基本）</th><td class="value">${fmt(derived.maintenance.baseDaily)} mL/日（${fmt(derived.maintenance.baseDaily / 24, 1)} mL/h）</td><td class="note"></td></tr>
+              <tr><th>発熱補正係数</th><td class="value">${fmt(derived.maintenance.feverFactor, 2)}</td><td class="note">37℃以上で補正あり</td></tr>
+              <tr><th>維持輸液量（補正後）</th><td class="value">${fmt(derived.maintenance.adjustedDaily)} mL/日（${fmt(derived.maintenance.adjustedHourly, 1)} mL/h）</td><td class="note"></td></tr>
+            </table>
+          </div>
+        </section>
+      `;
+
+      if (!criticals.length && !validation.errors.length) {
+        html += `
+          <section class="band-section">
+            <div class="band-title green">▶ 推奨輸液プロトコル（参考）</div>
+            <div class="band-body">
+              <table class="calc-table">
+                <tr><th>第一選択製剤</th><td class="value">${derived.fluidPlan.primary}</td><td class="note"></td></tr>
+                <tr><th>第二選択製剤</th><td class="value">${derived.fluidPlan.secondary}</td><td class="note"></td></tr>
+              </table>
+              <div class="table-wrap" style="border:none;border-radius:0;">
+                <table class="protocol-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>欠乏補正</th>
+                      <th>維持輸液</th>
+                      <th>合計</th>
+                      <th>投与速度</th>
+                      <th>備考</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows.map((row) => `<tr><td>${row.day}</td><td>${fmt(row.deficit)} mL</td><td>${fmt(row.maintain)} mL</td><td>${fmt(row.total)} mL</td><td>${fmt(row.rate)} mL/h</td><td style="text-align:left;">${row.note}</td></tr>`).join("")}
+                  </tbody>
+                  <tfoot>
+                    <tr><td>3日間合計</td><td>${fmt(deficitDay1 + deficitDay2 + deficitDay3)} mL</td><td>${fmt(maintDaily * 3)} mL</td><td>${fmt(total3Days)} mL</td><td></td><td style="text-align:left;"></td></tr>
+                    <tr><td>中止基準</td><td colspan="5" style="text-align:left;">呼吸困難・ラ音出現（肺水腫） / 尿量 &lt;0.5mL/kg/h / Na急速低下（&gt;0.5mEq/L/h）</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </section>
+        `;
+      }
+
+      html += `
+        <section class="band-section">
+          <div class="band-title orange">▶ Na補正速度安全計算（Adrogue-Madias式）</div>
+          <div class="band-body orange-body">
+            <table class="calc-table">
+              <tr><th>TBW（Total Body Water）</th><td class="value">${derived.tbw !== null ? `${fmt(derived.tbw, 1)} L` : "未計算"}</td><td class="note">体重×TBW係数</td></tr>
+              <tr><th>使用製剤</th><td class="value">${derived.infusionLabelUsed}</td><td class="note">Na ${fmt(derived.infusionNaUsed)} mEq/L / K ${fmt(derived.infusionKUsed)} mEq/L</td></tr>
+              <tr><th>1LあたりNa変化量</th><td class="value">${derived.adroguePerLiter !== null ? `${fmtSigned(derived.adroguePerLiter, 2)} mEq/L` : "未計算"}</td><td class="note">([輸液Na]+[輸液K]-血清Na)/(TBW+1)</td></tr>
+              <tr><th>1時間あたりNa変化速度</th><td class="value">${derived.naChangeHourly !== null ? `${fmt(derived.naChangeHourly, 3)} mEq/L/h` : "未計算"}</td><td class="note">上記× ${fmt(derived.infusionVolumeDailyUsed)}mL/日 ÷24h</td></tr>
+              <tr><th>安全性評価</th><td class="value orange-emphasis">${derived.naSafety}</td><td class="note">慢性例≤0.5mEq/L/h厳守</td></tr>
+            </table>
+          </div>
+        </section>
+        <section class="sheet-alert info" style="background:#eef0bf;border-color:#b7b06b;color:#564d00;">
+          ※ この計算は推奨製剤を前提とした参考値です。実投与時は輸液剤組成と採血結果を再確認してください。
+        </section>
+        <section class="sheet-alert warning" style="background:#f7dfe1;border-color:#d89aa1;color:#a10013;">
+          【Na補正速度上限】急性（&lt;48h）:&lt;1mEq/L/h / &lt;10-12mEq/L/24h　|　慢性（≥48h）:&lt;0.5mEq/L/h を最重要 / &lt;8-10mEq/L/24h
+        </section>
+        <section class="band-section">
+          <div class="band-title gray">▶ モニタリング計画（必須）</div>
+          <div class="band-body">
+            <table class="calc-table">
+              ${monitoringRows.map((row) => `<tr><th>${row.label}</th><td class="value">${row.value}</td><td class="note"></td></tr>`).join("")}
+            </table>
+            <div class="warn-line" style="color:#c10000;">△ ODS（浸透圧性脱髄症候群）予防のため、Na補正速度厳守。補正後2〜6日で構音障害・嚥下障害・四肢麻痺が出現しうる</div>
+          </div>
+        </section>
+      `;
+
+      if (reasoning.length || infos.length) {
+        html += `<section class="sheet-alert info"><strong>判定理由</strong><ul>${[...reasoning, ...infos].map((item) => `<li>${item}</li>`).join("")}</ul></section>`;
+      }
+
+      if (criticals.length) {
+        html += `<section class="sheet-alert critical"><strong>輸液提案停止</strong><ul>${criticals.map((item) => `<li>${item.message}</li>`).join("")}</ul></section>`;
+      }
+
+      html += `</div>`;
+      resultArea.innerHTML = html;
+    }
+
+    function buildVirtualCases() {
+      const cases = [];
+      const pushCase = (payload) => cases.push(payload);
+
+      for (let i = 1; i <= 10; i += 1) pushCase({
+        patientName: `HT${String(i).padStart(2, "0")} 高張性脱水`,
+        category: "高張性脱水",
+        note: "発熱と飲水不足",
+        age: 72 - (i % 5),
+        sex: i % 3 === 0 ? "女性" : "男性",
+        heightCm: 158 + i,
+        baselineWeightKg: 58 + i,
+        currentWeightKg: 56 + i,
+        baselineDate: "2026-03-01T09:00",
+        currentDate: "2026-03-05T09:00",
+        mentalStatusMode: "GCS",
+        gcs: 14,
+        jcs: "",
+        sbp: 104 + i,
+        dbp: 62 + (i % 6),
+        heartRate: 94 + i,
+        respiratoryRate: 18 + (i % 4),
+        temperatureC: 37.6 + (i * 0.1),
+        spo2: 94 - (i % 2),
+        urineMode: "hourly",
+        urineMlHour: 28 + i,
+        urineMlDay: "",
+        na: 147 + i,
+        k: 4.1 + ((i % 3) * 0.2),
+        cl: 109 + i,
+        bun: 28 + (i * 2),
+        cre: 0.8 + ((i % 4) * 0.2),
+        glucose: 118 + (i * 8),
+        tp: 7.1 + ((i % 3) * 0.1),
+        alb: 3.7 + ((i % 2) * 0.1),
+        hb: 13.2 + ((i % 4) * 0.3),
+        hct: 44 + i,
+        bnp: 80 + (i * 10),
+        stressFactor: i <= 5 ? 1.0 : 1.3,
+        oralDry: true,
+        poorSkinTurgor: true,
+        axillaryDry: i % 2 === 0,
+        edema: false,
+        crackles: false,
+        jvd: false,
+        clinicalMemo: "飲水不足と発熱が持続。"
+      });
+
+      for (let i = 1; i <= 10; i += 1) pushCase({
+        patientName: `IT${String(i).padStart(2, "0")} 等張性脱水`,
+        category: "等張性脱水",
+        note: "嘔吐または下痢",
+        age: 45 + i,
+        sex: i % 2 === 0 ? "女性" : "男性",
+        heightCm: 160 + i,
+        baselineWeightKg: 62 + i,
+        currentWeightKg: 60 + i,
+        baselineDate: "2026-03-08T08:00",
+        currentDate: "2026-03-10T08:00",
+        mentalStatusMode: "GCS",
+        gcs: 15,
+        jcs: "",
+        sbp: 98 + i,
+        dbp: 60 + (i % 5),
+        heartRate: 88 + i,
+        respiratoryRate: 17 + (i % 3),
+        temperatureC: 36.8 + (i * 0.05),
+        spo2: 96,
+        urineMode: "hourly",
+        urineMlHour: 34 + i,
+        urineMlDay: "",
+        na: 138 + (i % 4),
+        k: 3.7 + ((i % 4) * 0.2),
+        cl: 101 + i,
+        bun: 24 + i,
+        cre: 0.9 + ((i % 3) * 0.15),
+        glucose: 102 + (i * 6),
+        tp: 7.0 + ((i % 2) * 0.2),
+        alb: 3.6 + ((i % 3) * 0.1),
+        hb: 12.8 + ((i % 4) * 0.4),
+        hct: 41 + i,
+        bnp: 55 + (i * 8),
+        stressFactor: i <= 5 ? 1.1 : 1.2,
+        oralDry: i % 2 === 1,
+        poorSkinTurgor: true,
+        axillaryDry: i % 3 === 0,
+        edema: false,
+        crackles: false,
+        jvd: false,
+        clinicalMemo: "消化管からの体液喪失を想定。"
+      });
+
+      for (let i = 1; i <= 10; i += 1) pushCase({
+        patientName: `LT${String(i).padStart(2, "0")} 低張性脱水`,
+        category: "低張性脱水",
+        note: "Na喪失または利尿薬",
+        age: 54 + i,
+        sex: i % 2 === 0 ? "女性" : "男性",
+        heightCm: 155 + i,
+        baselineWeightKg: 55 + i,
+        currentWeightKg: 53 + i,
+        baselineDate: "2026-03-07T10:00",
+        currentDate: "2026-03-09T10:00",
+        mentalStatusMode: "GCS",
+        gcs: 14,
+        jcs: "",
+        sbp: 96 + i,
+        dbp: 58 + (i % 6),
+        heartRate: 90 + i,
+        respiratoryRate: 18 + (i % 4),
+        temperatureC: 36.7 + (i * 0.04),
+        spo2: 95,
+        urineMode: "hourly",
+        urineMlHour: 30 + i,
+        urineMlDay: "",
+        na: 126 + i,
+        k: 3.3 + ((i % 4) * 0.2),
+        cl: 92 + i,
+        bun: 18 + i,
+        cre: 0.7 + ((i % 3) * 0.15),
+        glucose: 96 + (i * 5),
+        tp: 6.8 + ((i % 3) * 0.15),
+        alb: 3.3 + ((i % 2) * 0.1),
+        hb: 11.8 + ((i % 4) * 0.3),
+        hct: 37 + i,
+        bnp: 120 + (i * 12),
+        stressFactor: 1.1,
+        oralDry: i % 2 === 0,
+        poorSkinTurgor: true,
+        axillaryDry: i % 3 === 1,
+        edema: i >= 7,
+        crackles: i >= 8,
+        jvd: i >= 9,
+        clinicalMemo: "低Na方向の体液変化を想定。"
+      });
+
+      for (let i = 1; i <= 10; i += 1) pushCase({
+        patientName: `WR${String(i).padStart(2, "0")} Warning重点`,
+        category: "Warning重点",
+        note: "腎機能低下・心不全リスク",
+        age: 68 + (i % 6),
+        sex: i % 2 === 0 ? "女性" : "男性",
+        heightCm: 154 + i,
+        baselineWeightKg: 57 + i,
+        currentWeightKg: 57 + i - (i % 3),
+        baselineDate: "2026-03-01T07:00",
+        currentDate: "2026-03-06T07:00",
+        mentalStatusMode: "GCS",
+        gcs: 14,
+        jcs: "",
+        sbp: 102 + i,
+        dbp: 60 + (i % 5),
+        heartRate: 86 + i,
+        respiratoryRate: 18 + (i % 3),
+        temperatureC: 37.0 + (i * 0.06),
+        spo2: 93 + (i % 2),
+        urineMode: "hourly",
+        urineMlHour: 26 + i,
+        urineMlDay: "",
+        na: 133 + (i % 5),
+        k: i <= 4 ? 5.6 + (i * 0.05) : 4.6 + ((i % 3) * 0.2),
+        cl: 99 + i,
+        bun: 28 + (i * 2),
+        cre: 1.5 + (i * 0.12),
+        glucose: i >= 8 ? 280 + (i * 15) : 132 + (i * 9),
+        tp: 6.7 + ((i % 3) * 0.2),
+        alb: 3.1 + ((i % 2) * 0.1),
+        hb: 11.5 + ((i % 4) * 0.4),
+        hct: 35 + i,
+        bnp: i <= 5 ? 240 + (i * 35) : 520 + (i * 20),
+        stressFactor: 1.2,
+        oralDry: i % 2 === 1,
+        poorSkinTurgor: i % 2 === 0,
+        axillaryDry: i % 3 === 0,
+        edema: i >= 4,
+        crackles: i >= 6,
+        jvd: i >= 7,
+        clinicalMemo: "溢水との見極めが必要。"
+      });
+
+      for (let i = 1; i <= 10; i += 1) pushCase({
+        patientName: `CR${String(i).padStart(2, "0")} Critical重点`,
+        category: "Critical重点",
+        note: "即時報告が必要",
+        age: 52 + i,
+        sex: i % 2 === 0 ? "女性" : "男性",
+        heightCm: 160 + i,
+        baselineWeightKg: 63 + i,
+        currentWeightKg: 60 + i,
+        baselineDate: "2026-03-09T09:00",
+        currentDate: "2026-03-11T09:00",
+        mentalStatusMode: i >= 8 ? "JCS" : "GCS",
+        gcs: i <= 7 ? 11 + (i % 2) : "",
+        jcs: i >= 8 ? (i === 8 ? "II-20" : "III-200") : "",
+        sbp: i <= 2 ? 82 + i : 96 + i,
+        dbp: 50 + (i % 5),
+        heartRate: i <= 2 ? 118 + (i * 4) : 92 + (i * 3),
+        respiratoryRate: 20 + (i % 6),
+        temperatureC: 37.4 + (i * 0.08),
+        spo2: i === 5 ? 84 : 92 - (i % 3),
+        urineMode: i === 6 ? "daily" : "hourly",
+        urineMlHour: i === 6 ? "" : 20 + i,
+        urineMlDay: i === 6 ? 80 : "",
+        na: i === 7 ? 118 : i === 8 ? 164 : 140 + (i % 4),
+        k: i === 3 ? 6.4 : i === 4 ? 2.3 : 4.2 + ((i % 2) * 0.2),
+        cl: 100 + i,
+        bun: 26 + (i * 3),
+        cre: i === 9 ? 4.8 : 1.0 + (i * 0.22),
+        glucose: i === 10 ? 560 : 130 + (i * 12),
+        tp: 6.9 + ((i % 2) * 0.2),
+        alb: 3.4,
+        hb: 12.2,
+        hct: 40 + i,
+        bnp: 160 + (i * 25),
+        stressFactor: 1.3,
+        oralDry: true,
+        poorSkinTurgor: true,
+        axillaryDry: i % 2 === 0,
+        edema: i >= 8,
+        crackles: i >= 8,
+        jvd: i >= 9,
+        clinicalMemo: "重症化サインあり。"
+      });
+
+      return cases;
+    }
+
+    const virtualCases = buildVirtualCases();
+
+    function buildCaseExportRows() {
+      return virtualCases.map((item) => {
+        const result = evaluateCase(item);
+        return {
+          caseId: item.patientName.split(" ")[0],
+          category: item.category,
+          title: item.patientName,
+          alertLevel: result.overallLevel,
+          dehydrationType: result.derived.dehydrationType,
+          posm: result.derived.posm !== null ? Number(result.derived.posm.toFixed(1)) : null,
+          egfr: result.derived.egfr !== null ? Number(result.derived.egfr.toFixed(1)) : null,
+          egfrStage: result.derived.egfrStage,
+          estimatedDeficitMl: result.derived.averageDeficit !== null ? Math.round(result.derived.averageDeficit) : null,
+          note: item.note
+        };
+      });
+    }
+
+    function renderCaseSummary(rows) {
+      const counts = rows.reduce((acc, row) => {
+        acc.total += 1;
+        acc[row.alertLevel] = (acc[row.alertLevel] || 0) + 1;
+        return acc;
+      }, { total: 0, CRITICAL: 0, WARNING: 0, INFO: 0, NONE: 0 });
+
+      caseSummary.innerHTML = `
+        <div class="metric"><div class="label">総症例数</div><div class="value">${counts.total}</div></div>
+        <div class="metric"><div class="label">Critical症例</div><div class="value">${counts.CRITICAL}</div></div>
+        <div class="metric"><div class="label">Warning症例</div><div class="value">${counts.WARNING}</div></div>
+        <div class="metric"><div class="label">Info/None</div><div class="value">${counts.INFO + counts.NONE}</div></div>
+      `;
+    }
+
+    function renderCaseTable() {
+      caseTableBody.innerHTML = virtualCases.map((item, index) => {
+        const result = evaluateCase(item);
+        const pillClass = result.overallLevel === "CRITICAL" ? "critical" : result.overallLevel === "WARNING" ? "warning" : result.overallLevel === "INFO" ? "info" : "none";
+        return `
+          <tr>
+            <td>${item.patientName.split(" ")[0]}</td>
+            <td>${item.category}</td>
+            <td>${item.note}<div class="subtle">${item.patientName}</div></td>
+            <td>${result.derived.dehydrationType}</td>
+            <td><span class="pill ${pillClass}">${result.overallLevel}</span></td>
+            <td>${fmt(result.derived.posm)}</td>
+            <td>${fmt(result.derived.egfr)}<div class="subtle">${result.derived.egfrStage}</div></td>
+            <td><button class="secondary" type="button" data-case-index="${index}">読込</button></td>
+          </tr>
+        `;
+      }).join("");
+      renderCaseSummary(buildCaseExportRows());
+    }
+
+    function downloadText(filename, text, type) {
+      const blob = new Blob([text], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function exportCasesJson() {
+      downloadText("virtual_cases_50.json", JSON.stringify(buildCaseExportRows(), null, 2), "application/json");
+    }
+
+    function exportCasesCsv() {
+      const rows = buildCaseExportRows();
+      const headers = Object.keys(rows[0]);
+      const csv = [headers.join(","), ...rows.map((row) => headers.map((key) => `"${String(row[key] ?? "").replaceAll('"', '""')}"`).join(","))].join("\n");
+      downloadText("virtual_cases_50.csv", csv, "text/csv;charset=utf-8");
+    }
+
+    function runEvaluation() {
+      renderResult(evaluateCase(collectFormData()));
+    }
+
+    document.getElementById("runButton").addEventListener("click", runEvaluation);
+    document.getElementById("resetButton").addEventListener("click", () => { fillForm(INITIAL_CASE); runEvaluation(); });
+    document.getElementById("loadFirstCaseButton").addEventListener("click", () => { fillForm(virtualCases[0]); runEvaluation(); });
+    document.getElementById("exportJsonButton").addEventListener("click", exportCasesJson);
+    document.getElementById("exportCsvButton").addEventListener("click", exportCasesCsv);
+    document.getElementById("gcsEye").addEventListener("change", syncConditionalFields);
+    document.getElementById("gcsVerbal").addEventListener("change", syncConditionalFields);
+    document.getElementById("gcsMotor").addEventListener("change", syncConditionalFields);
+    caseTableBody.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-case-index]");
+      if (!button) return;
+      fillForm(virtualCases[Number(button.dataset.caseIndex)]);
+      runEvaluation();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.getElementById("mentalStatusMode").addEventListener("change", syncConditionalFields);
+    document.getElementById("urineMode").addEventListener("change", syncConditionalFields);
+
+    fillForm(INITIAL_CASE);
+    syncConditionalFields();
+    renderCaseTable();
+    runEvaluation();
+  </script>
+</body>
+</html>

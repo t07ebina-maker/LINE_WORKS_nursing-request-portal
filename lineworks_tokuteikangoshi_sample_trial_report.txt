@@ -1,0 +1,64 @@
+﻿LINEWORKS UI Mock Sample Trial
+Date: 2026-03-17 16:12:44
+HTML: C:\Users\Owner\OneDrive\⑭Codex作業フォルダ\lineworks_tokuteikangoshi_ui_mock.html
+Samples: C:\Users\Owner\OneDrive\⑭Codex作業フォルダ\lineworks_tokuteikangoshi_samples_50.json
+
+Total cases: 50
+PASS: 50
+FAIL: 0
+Doctor cases: 25
+Nurse cases: 25
+Patient flow cases: 48
+Education flow cases: 2
+
+Case results:
+D01	doctor	PASS	呼吸の管理 / 気管チューブ位置調整
+D02	doctor	PASS	呼吸の管理 / 侵襲的陽圧換気設定変更
+D03	doctor	PASS	呼吸の管理 / 人工呼吸器離脱
+D04	doctor	PASS	循環・薬剤調整 / カテコラミン投与量調整
+D05	doctor	PASS	循環・薬剤調整 / 降圧剤投与量調整
+D06	doctor	PASS	循環・薬剤調整 / 鎮静薬投与量調整
+D07	doctor	PASS	循環・薬剤調整 / 抗精神病薬臨時投与
+D08	doctor	PASS	循環・薬剤調整 / 一時的ペースメーカ操作・管理
+D09	doctor	PASS	循環・薬剤調整 / 一時的ペースメーカリード抜去
+D10	doctor	PASS	循環・薬剤調整 / IABP離脱補助頻度調整
+D11	doctor	PASS	輸液・電解質調整 / 脱水症状への輸液補正
+D12	doctor	PASS	輸液・電解質調整 / Na・K・Cl投与量調整
+D13	doctor	PASS	輸液・電解質調整 / 高カロリー輸液投与量調整
+D14	doctor	PASS	血管路管理 / PICC挿入
+D15	doctor	PASS	血管路管理 / CV抜去
+D16	doctor	PASS	血管路管理 / 直接動脈穿刺採血
+D17	doctor	PASS	血管路管理 / 橈骨動脈ライン確保
+D18	doctor	PASS	創傷・創部管理 / 壊死組織除去（デブリドマン）
+D19	doctor	PASS	創傷・創部管理 / 陰圧閉鎖療法（NPWT）
+D20	doctor	PASS	創傷・創部管理 / 心嚢ドレーン抜去
+D21	doctor	PASS	創傷・創部管理 / 胸腔ドレーン抜去
+D22	doctor	PASS	創傷・創部管理 / 腹腔ドレーン抜去
+D23	doctor	PASS	創傷・創部管理 / 創部ドレーン抜去
+D24	doctor	PASS	意思決定支援
+D25	doctor	PASS	教育・その他
+N01	nurse	PASS	気管チューブ位置調整
+N02	nurse	PASS	侵襲的陽圧換気設定変更
+N03	nurse	PASS	鎮静薬投与量調整
+N04	nurse	PASS	人工呼吸器離脱
+N05	nurse	PASS	一時的ペースメーカ操作・管理
+N06	nurse	PASS	一時的ペースメーカリード抜去
+N07	nurse	PASS	IABP離脱補助頻度調整
+N08	nurse	PASS	心嚢ドレーン抜去
+N09	nurse	PASS	胸腔ドレーン抜去
+N10	nurse	PASS	腹腔ドレーン抜去
+N11	nurse	PASS	脱水症状への輸液補正
+N12	nurse	PASS	高カロリー輸液投与量調整
+N13	nurse	PASS	感染徴候への薬剤臨時投与
+N14	nurse	PASS	カテコラミン投与量調整
+N15	nurse	PASS	Na・K・Cl投与量調整
+N16	nurse	PASS	降圧剤投与量調整
+N17	nurse	PASS	抗精神病薬臨時投与
+N18	nurse	PASS	意思決定支援
+N19	nurse	PASS	CV抜去
+N20	nurse	PASS	PICC挿入
+N21	nurse	PASS	壊死組織除去（デブリドマン）
+N22	nurse	PASS	陰圧閉鎖療法（NPWT）
+N23	nurse	PASS	創部ドレーン抜去
+N24	nurse	PASS	直接動脈穿刺採血
+N25	nurse	PASS	勉強会・教育
