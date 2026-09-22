@@ -1,0 +1,267 @@
+/* ============================================================
+   style.css  –  特定看護師 相談・依頼窓口 UI Mock
+   ============================================================ */
+
+/* ---------- リセット・ベース ---------- */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  background: #eef3ef;
+  color: #16352f;
+}
+
+/* ---------- ラッパー ---------- */
+.wrap {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 18px 14px 28px;
+}
+
+/* ---------- ヒーローバナー ---------- */
+.hero {
+  background: linear-gradient(135deg, #005f73, #0a9396);
+  color: #fff;
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .12);
+}
+.hero h1 { margin: 0 0 8px; font-size: 24px; }
+.hero p  { margin: 0; font-size: 13px; line-height: 1.7; }
+
+/* ---------- スマホ外枠 ---------- */
+.phone {
+  margin-top: 16px;
+  background: #f8fbf9;
+  border: 1px solid #d3e0da;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .08);
+}
+
+/* ---------- ヘッダー ---------- */
+.head {
+  padding: 16px;
+  border-bottom: 1px solid #d3e0da;
+  background: #f2f8f5;
+}
+.head h2 { margin: 0 0 8px; font-size: 21px; }
+.head p  { margin: 0; color: #5c766d; font-size: 12px; line-height: 1.6; }
+
+/* ステッパー */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+.step {
+  padding: 7px 4px;
+  border-radius: 999px;
+  text-align: center;
+  background: #dfe8e3;
+  color: #50655d;
+  font-size: 11px;
+  font-weight: 700;
+}
+.step.on { background: #005f73; color: #fff; }
+
+/* ---------- ボディ ---------- */
+.body {
+  padding: 14px 14px 120px;
+  display: grid;
+  gap: 12px;
+}
+
+/* ---------- カード ---------- */
+.card {
+  background: #fff;
+  border: 1px solid #d3e0da;
+  border-radius: 18px;
+  padding: 14px;
+}
+.card h3 { margin: 0 0 6px; font-size: 16px; }
+.card p  { margin: 0; color: #5c766d; font-size: 12px; line-height: 1.6; }
+
+/* ---------- グリッド ---------- */
+.grid { display: grid; gap: 10px; }
+
+/* ---------- ボタン基底 ---------- */
+.btn {
+  width: 100%;
+  border: 1px solid #d3e0da;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: #16352f;
+  transition:
+    background-color .16s ease,
+    border-color     .16s ease,
+    transform        .16s ease,
+    box-shadow       .16s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn strong { display: block; font-size: 14px; margin-bottom: 3px; }
+.btn span   { display: block; font-size: 12px; color: #5c766d; line-height: 1.5; }
+
+/* ---- ボタンバリアント ---- */
+.btn.role.doctor  { background: #3a86ff; border-color: #2f6fce; color: #fff; }
+.btn.role.nurse   { background: #f29ec2; border-color: #df7baa; color: #fff; }
+.btn.role.nurse  strong,
+.btn.role.nurse  span,
+.btn.role.doctor strong,
+.btn.role.doctor span  { color: #fff; }
+
+.btn.entry        { background: #d62828; border-color: #b61f1f; color: #fff; }
+.btn.entry strong,
+.btn.entry span   { color: #fff; }
+
+.btn.detail        { background: #f77f00; border-color: #dc6f00; color: #fff; }
+.btn.detail strong,
+.btn.detail span   { color: #fff; }
+
+.btn.choice        { background: #003049; border-color: #02263a; color: #fff; }
+.btn.choice strong,
+.btn.choice span   { color: #fff; }
+
+.btn.action {
+  background: #2a9d8f;
+  border-color: #1f7f73;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(42, 157, 143, .22);
+}
+.btn.action strong,
+.btn.action span   { color: #fff; }
+
+/* ---- 選択状態（.sel） ---- */
+.btn.sel {
+  outline: 3px solid #111827;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .65) inset;
+}
+.btn.role.doctor.sel { background: #1d4ed8; border-color: #1e40af; }
+.btn.role.nurse.sel  { background: #d94f8d; border-color: #b8326d; }
+.btn.role.nurse.sel strong,
+.btn.role.nurse.sel span { color: #fff; }
+.btn.entry.sel   { background: #9f1239; border-color: #881337; }
+.btn.detail.sel  { background: #c2410c; border-color: #9a3412; }
+.btn.choice.sel  { background: #1d3557; border-color: #14253d; }
+.btn.action.sel  { background: #176f66; border-color: #115e59; }
+
+/* ---------- 2カラム行 ---------- */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------- フィールド ---------- */
+.field { display: grid; gap: 6px; }
+.field label { font-size: 12px; font-weight: 700; color: #5c766d; }
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid #c8d7d0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+}
+.field textarea { min-height: 88px; resize: vertical; }
+
+/* ---------- 確認サマリー ---------- */
+.summary { display: grid; gap: 8px; }
+.item {
+  background: #f5f8f6;
+  border: 1px solid #d3e0da;
+  border-radius: 14px;
+  padding: 11px 12px;
+}
+.item b {
+  display: block;
+  font-size: 12px;
+  color: #5c766d;
+  margin-bottom: 4px;
+}
+
+/* ---------- フッター ---------- */
+.footer {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 14px 14px;
+  background: linear-gradient(180deg, rgba(248,251,249,.5), #f8fbf9 32%);
+}
+
+/* メッセージ表示 */
+.msg {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff4da;
+  border: 1px solid #efd089;
+  color: #7c550c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ナビゲーションボタン */
+.nav { display: flex; gap: 10px; }
+.nav button,
+.help button {
+  font: inherit;
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 14px;
+  cursor: pointer;
+}
+.back { flex: 1; background: #cbd5e1; }
+.next { flex: 2; background: #111827; color: #fff; }
+
+/* ヘルプボタン */
+.help button {
+  width: 100%;
+  margin-top: 10px;
+  background: #ffb703;
+  color: #4b3200;
+  border: 1px solid #e5a200;
+  text-align: left;
+  font-weight: 700;
+}
+
+/* ---------- スクリーン切り替え ---------- */
+.screen    { display: none; }
+.screen.on { display: block; }
+
+/* ---------- 汎用ユーティリティ ---------- */
+.hide { display: none; }
+
+/* ---------- モーダル ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .42);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.modal.on { display: flex; }
+
+.sheet {
+  width: min(100%, 390px);
+  background: #fff;
+  border-radius: 22px;
+  padding: 18px;
+  border: 1px solid #d3e0da;
+}
+.sheet h3 { margin: 0 0 10px; }
+.sheet p,
+.sheet li { font-size: 14px; line-height: 1.7; color: #40554e; }
+.sheet ul  { padding-left: 18px; }
+
+/* 緊急警告シート */
+.warn { background: #fff2f3; border-color: #efc8cb; }
