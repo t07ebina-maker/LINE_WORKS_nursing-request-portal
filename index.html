@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v7</title>
+  <title>特定行為依頼窓口 v8</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -364,7 +364,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
           <div class="howto-sub" id="copyHead">コピーして貼り付ける</div>
           <button type="button" class="copy-btn" id="copyBtn">依頼文をコピー</button>
           <p class="flow ok hide" id="copyStatus">✓ 依頼文をコピーしました</p>
-          <p class="flow">→ LINE WORKSで「特定行為依頼窓口」のトークを開き、<span class="nb">貼り付けて送信</span></p>
+          <p class="flow" id="copyFlow">→ LINE WORKSで「特定行為依頼窓口」のトークを開き、<span class="nb">貼り付けて送信</span></p>
           <p class="note">※ LINE WORKSで送信するまで、依頼は<span class="nb">届きません。</span><br>※ 個人宛て・公式グループには<span class="nb">送らないでください。</span><br>※ トークが見つからない場合は、LINE WORKSで「特定行為依頼窓口」を検索して<span class="nb">追加してください。</span></p>
         </div>
         <div class="card">
@@ -1118,7 +1118,13 @@ qsa('.step').forEach(x => {
 qs('#help').onclick = () => toggle('helpModal', true);
 qsa('[data-close]').forEach(b => b.onclick = () => toggle(b.dataset.close, false));
 qs('#copyBtn').onclick = copyText;
-if (navigator.share) {
+// スマホ・タブレット（主な操作が指）だけ「直接送る」を出す。PCは共有先にLINE WORKSが出ないためコピーのみ
+const isMobile = (window.matchMedia && matchMedia('(pointer: coarse)').matches)
+  || !!(navigator.userAgentData && navigator.userAgentData.mobile);
+if (!isMobile) {
+  qs('#copyFlow').innerHTML = '→ LINE WORKS（PC版）で「特定行為依頼窓口」のトークを開き、<span class="nb">貼り付けて送信</span>';
+}
+if (navigator.share && isMobile) {
   qs('#shareBtn').classList.remove('hide');
   qsa('.share-only').forEach(x => x.classList.remove('hide'));
   qs('#copyHead').innerHTML = '② コピーして貼り付ける<span class="nb">（①が使えないとき）</span>';
