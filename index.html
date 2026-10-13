@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v6</title>
+  <title>特定行為依頼窓口 v7</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -179,11 +179,13 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .notice { padding: 11px 13px; border-radius: 12px; font-size: 13px; line-height: 1.7; background: var(--note); border: 1px solid var(--note-line); color: #6a5310; }
 .notice.info { background: var(--main-soft); border-color: #bfdcd7; color: #24534d; }
 .notice b { display: block; font-size: 14px; }
+.howto .howto-sub { font-size: 14px; font-weight: 700; color: var(--main-deep); margin: 12px 0 6px; }
+.howto .flow { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #3d514b; }
+.howto .flow.ok { color: var(--main); font-weight: 700; }
+.howto .note { font-size: 12px; color: #6b7f78; margin: 12px 0 0; line-height: 1.7; }
+.howto .nb { white-space: nowrap; }
 .done-list { margin: 6px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--text); }
 .done-list li { margin-bottom: 6px; }
-.send-steps { margin: 0; padding-left: 22px; }
-.send-steps li { margin-bottom: 4px; }
-.send-steps li.ok { color: var(--main); font-weight: 700; }
 
 /* ---------- フッター ---------- */
 .footer {
@@ -354,10 +356,17 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
       <section class="screen" data-screen="confirm">
         <div class="notice hide" id="timeNotice"></div>
         <div class="summary" id="summary"></div>
-        <button type="button" class="send-btn hide" id="shareBtn">依頼窓口へ送る（LINE WORKS）</button>
-        <button type="button" class="copy-btn" id="copyBtn">依頼文をコピー</button>
-        <p class="hint send-hint">上のボタンを押すだけでは送信されません。LINE WORKSで宛先を選び、送信してください。</p>
-        <div class="notice info" id="sendGuide"></div>
+        <div class="card howto">
+          <h3>送り方</h3>
+          <div class="howto-sub share-only hide">① LINE WORKSに直接送る（スマホ）</div>
+          <button type="button" class="send-btn hide" id="shareBtn">依頼窓口へ送る<span class="nb">（LINE WORKS）</span></button>
+          <p class="flow share-only hide">→ LINE WORKS を選ぶ<br>→ 宛先「特定行為依頼窓口」を選ぶ<br>→ 送信</p>
+          <div class="howto-sub" id="copyHead">コピーして貼り付ける</div>
+          <button type="button" class="copy-btn" id="copyBtn">依頼文をコピー</button>
+          <p class="flow ok hide" id="copyStatus">✓ 依頼文をコピーしました</p>
+          <p class="flow">→ LINE WORKSで「特定行為依頼窓口」のトークを開き、<span class="nb">貼り付けて送信</span></p>
+          <p class="note">※ LINE WORKSで送信するまで、依頼は<span class="nb">届きません。</span><br>※ 個人宛て・公式グループには<span class="nb">送らないでください。</span><br>※ トークが見つからない場合は、LINE WORKSで「特定行為依頼窓口」を検索して<span class="nb">追加してください。</span></p>
+        </div>
         <div class="card">
           <h3>送信後にすること</h3>
           <ul class="done-list" id="afterList"></ul>
@@ -990,17 +999,7 @@ function renderTimeNotice(t, id) {
 /* ---------- 送信・コピー ---------- */
 
 function renderSendGuide(copied) {
-  const steps = [
-    copied ? '依頼文をコピーしました' : '上のボタンで依頼文をコピー（または「依頼窓口へ送る」）',
-    'LINE WORKSで「特定行為依頼窓口」のトークを開き、貼り付けて送信（個人宛て・公式グループには送らない）。トークが見つからない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加',
-    '送信したら、下の「送信後にすること」を行う'
-  ];
-  const ol = document.createElement('ol');
-  ol.className = 'send-steps';
-  steps.forEach((t, i) => { const li = document.createElement('li'); li.textContent = t; if (i === 0 && copied) li.className = 'ok'; ol.appendChild(li); });
-  const box = qs('#sendGuide');
-  box.innerHTML = '';
-  box.appendChild(ol);
+  qs('#copyStatus').classList.toggle('hide', !copied);
 }
 
 function shareText() {
@@ -1121,6 +1120,8 @@ qsa('[data-close]').forEach(b => b.onclick = () => toggle(b.dataset.close, false
 qs('#copyBtn').onclick = copyText;
 if (navigator.share) {
   qs('#shareBtn').classList.remove('hide');
+  qsa('.share-only').forEach(x => x.classList.remove('hide'));
+  qs('#copyHead').innerHTML = '② コピーして貼り付ける<span class="nb">（①が使えないとき）</span>';
   qs('#shareBtn').onclick = () => toggle('shareModal', true);
   // 共有メニューはこのボタンの操作で開く（送信先の確認を挟む）
   qs('#shareOk').onclick = () => { toggle('shareModal', false); shareText(); };
