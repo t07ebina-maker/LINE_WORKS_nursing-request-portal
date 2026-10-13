@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v5</title>
+  <title>特定行為依頼窓口 v6</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -68,6 +68,7 @@ body {
   background: #e5ece9; color: #5d716a; font-size: 12px; font-weight: 700;
 }
 .step.on { background: var(--main); color: #fff; }
+.step.can { background: #cfe3de; color: #1f5a52; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 .body { padding: 14px 14px 16px; }
 
@@ -177,6 +178,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 
 .notice { padding: 11px 13px; border-radius: 12px; font-size: 13px; line-height: 1.7; background: var(--note); border: 1px solid var(--note-line); color: #6a5310; }
 .notice.info { background: var(--main-soft); border-color: #bfdcd7; color: #24534d; }
+.notice b { display: block; font-size: 14px; }
 .done-list { margin: 6px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--text); }
 .done-list li { margin-bottom: 6px; }
 .send-steps { margin: 0; padding-left: 22px; }
@@ -216,6 +218,9 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .sheet p, .sheet li { font-size: 14px; line-height: 1.7; color: #3d514b; }
 .sheet ul { padding-left: 18px; }
 .sheet .next { width: 100%; border: 0; border-radius: 14px; padding: 14px; font: inherit; cursor: pointer; }
+.sheet .share-to { display: block; padding-left: 1em; }
+.sheet .share-note { display: block; margin-top: 6px; font-size: 15px; font-weight: 700; color: #b42318; }
+.sheet .share-cancel { width: 100%; border: 0; border-radius: 14px; padding: 12px; font: inherit; cursor: pointer; margin-top: 8px; }
 .warn { background: #fff5f5; border-color: #f0c9c9; }
 .warn h3 { color: var(--urgent); }
   </style>
@@ -245,6 +250,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 
       <!-- 職種 -->
       <section class="screen" data-screen="top">
+        <div class="notice hide" id="topNotice"></div>
         <div class="grid">
           <button class="btn role nurse" data-role="nurse">
             <strong>看護師</strong>
@@ -350,6 +356,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
         <div class="summary" id="summary"></div>
         <button type="button" class="send-btn hide" id="shareBtn">依頼窓口へ送る（LINE WORKS）</button>
         <button type="button" class="copy-btn" id="copyBtn">依頼文をコピー</button>
+        <p class="hint send-hint">上のボタンを押すだけでは送信されません。LINE WORKSで宛先を選び、送信してください。</p>
         <div class="notice info" id="sendGuide"></div>
         <div class="card">
           <h3>送信後にすること</h3>
@@ -389,11 +396,22 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
     <ul>
       <li>職種 → 内容 → 具体的な行為 の順に選ぶと入力画面へ進みます。</li>
       <li>確認画面の「依頼窓口へ送る」を押し、LINE WORKSで「特定行為依頼窓口」を選んで送信します。ボタンが出ない場合は、依頼文をコピーして貼り付けてください。</li>
+      <li>LINE WORKSに「特定行為依頼窓口」のトークがない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加してください。</li>
       <li>受付時間：平日10時～15時（祝日を除く）。時間外の依頼は、次の運用日の10時～11時に確認します。</li>
       <li>受付時間内の依頼でも、当日の対応を確約するものではありません。</li>
       <li>緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。</li>
     </ul>
     <button class="next" data-close="helpModal">閉じる</button>
+  </div>
+</div>
+
+<div class="modal" id="shareModal">
+  <div class="sheet warn">
+    <h3>送信先を確認してください</h3>
+    <p>次の画面で <b>LINE WORKS</b> を選び、<span class="share-to">宛先は <b>「特定行為依頼窓口」</b> <span style="white-space: nowrap">だけにしてください。</span></span></p>
+    <p>個人宛て・公式グループ・ほかのアプリには<span class="share-to">送らないでください。</span><span class="share-note">※患者情報が含まれます</span></p>
+    <button class="next" id="shareOk">確認して共有メニューを開く</button>
+    <button class="back share-cancel" data-close="shareModal">やめる</button>
   </div>
 </div>
 
@@ -548,7 +566,9 @@ const educationOptions = {
 /* 送る前の確認（テスト運用計画書 案v6 第3節・第7節） */
 const checkItems = {
   nurse: [
-    '特定行為の実施を依頼する場合は、電子カルテの指示簿カレンダーで医師の一時指示を確認した',
+    // 配列は「どちらかを選ぶ」項目
+    ['電子カルテの指示簿カレンダーで、医師の一時指示を確認した（特定行為の実施を依頼する）',
+     '相談のみ（特定行為の実施は依頼しない）'],
     '依頼したことを、ブロックリーダーまたは同部署の看護師に伝える'
   ],
   doctor: []
@@ -614,14 +634,22 @@ function show(name) {
   st.screen = name;
   setMsg('');
   qsa('.screen').forEach(x => x.classList.toggle('on', x.dataset.screen === name));
-  qsa('.step').forEach(x => x.classList.toggle('on', x.dataset.s === name));
+  qsa('.step').forEach(x => {
+    x.classList.toggle('on', x.dataset.s === name);
+    // 前のステップだけ押して戻れる（完了画面では戻らない）
+    const can = name !== 'done' && order.indexOf(x.dataset.s) < order.indexOf(name);
+    x.classList.toggle('can', can);
+    if (can) { x.setAttribute('role', 'button'); x.tabIndex = 0; }
+    else { x.removeAttribute('role'); x.removeAttribute('tabindex'); }
+  });
+  if (name === 'top') renderTimeNotice(receptionNotice(new Date()), 'topNotice');
 
   const titles = {
     top:     ['職種を選んでください', '選ぶと次の画面へ進みます。'],
     select:  ['依頼する内容を選んでください', ''],
     input:   ['必要事項を入力してください', '必須の項目を入力すると送信画面へ進めます。'],
     confirm: ['内容を確認して送信してください', '送信先：LINE WORKS「特定行為依頼窓口」'],
-    done:    ['依頼文を作成しました', '']
+    done:    ['送信後の流れ', '']
   };
   qs('#title').textContent = titles[name][0];
   qs('#sub').textContent   = titles[name][1];
@@ -629,7 +657,7 @@ function show(name) {
 
   qs('#back').style.visibility = name === 'top' ? 'hidden' : 'visible';
   qs('#next').classList.toggle('hide', name === 'top' || name === 'select');
-  qs('#next').textContent = name === 'done' ? '新しい依頼を作成' : name === 'confirm' ? '送信しました' : '確認へ進む';
+  qs('#next').textContent = name === 'done' ? '新しい依頼を作成' : name === 'confirm' ? 'LINE WORKSで送信した' : '確認へ進む';
   window.scrollTo(0, 0);
 }
 
@@ -771,7 +799,7 @@ function syncInput() {
   qs('#patientArea').classList.toggle('hide', edu);
 
   qs('#name').placeholder = doctor ? '例）山田 太郎／循環器内科' : '例）山田 花子／西６病棟';
-  qs('#pidLabel').innerHTML = '患者ID' + (doctor ? '<span class="opt">任意</span>' : '<span class="req">必須</span>');
+  qs('#pidLabel').innerHTML = '患者ID' + (doctor ? '<span class="opt">任意（カルテ番号が手元にない場合は空欄で可）</span>' : '<span class="req">必須</span>');
   qs('#statusLabel').innerHTML = '現在の状況・説明<span class="opt">任意</span>';
   qs('#status').placeholder = doctor ? '目的・指示内容など（任意）' : 'バイタル、経過、気になっている点など';
 
@@ -789,15 +817,19 @@ function syncInput() {
   const cb = qs('#checkBox');
   cb.innerHTML = '';
   checks.forEach((t, i) => {
-    const l = document.createElement('label');
-    l.className = 'check';
-    const c = document.createElement('input');
-    c.type = 'checkbox';
-    c.className = 'precheck';
-    c.id = 'precheck' + i;
-    l.appendChild(c);
-    l.appendChild(document.createTextNode(t));
-    cb.appendChild(l);
+    const opts = Array.isArray(t) ? t : [t];
+    opts.forEach((x, j) => {
+      const l = document.createElement('label');
+      l.className = 'check';
+      const c = document.createElement('input');
+      c.type = Array.isArray(t) ? 'radio' : 'checkbox';
+      c.className = Array.isArray(t) ? 'prechoice' : 'precheck';
+      if (Array.isArray(t)) c.name = 'prechoice' + i;
+      c.id = 'precheck' + i + '_' + j;
+      l.appendChild(c);
+      l.appendChild(document.createTextNode(x));
+      cb.appendChild(l);
+    });
   });
 }
 
@@ -846,8 +878,9 @@ function okInput() {
     setMsg('緊急の場合はこの窓口では送れません。直接連絡してください。');
     return false;
   }
-  if (qsa('.precheck').some(c => !c.checked)) {
-    setMsg('「送る前の確認」にチェックを入れてください。');
+  const groups = [...new Set(qsa('.prechoice').map(c => c.name))];
+  if (qsa('.precheck').some(c => !c.checked) || groups.some(g => !qsa('.prechoice').some(c => c.name === g && c.checked))) {
+    setMsg('「送る前の確認」を選び、チェックを入れてください。');
     return false;
   }
   return true;
@@ -935,12 +968,23 @@ function receptionNotice(now) {
   const dow = now.getDay();
   const min = now.getHours() * 60 + now.getMinutes();
   if (dow === 0 || dow === 6 || HOLIDAYS.includes(ymd)) {
-    return '本日は運用日ではありません（土日・祝日）。依頼は次の運用日の10時～11時に確認します。';
+    return { info: false, lines: ['本日は運用日ではありません', '次の運用日の10時～11時に確認します。'] };
   }
   if (min < RECEPT_START || min > RECEPT_END) {
-    return '受付時間（平日10時～15時）外です。依頼は次の運用日の10時～11時に確認します。';
+    return { info: false, lines: ['受付時間外です（平日10時～15時）', '次の運用日の10時～11時に確認します。'] };
   }
-  return '';
+  return { info: true, lines: ['受付時間内です', '当番が確認し、実施者から返答します。', '当日の対応は確約できません。'] };
+}
+
+function renderTimeNotice(t, id) {
+  const box = qs('#' + (id || 'timeNotice'));
+  box.innerHTML = '';
+  box.className = 'notice' + (t.info ? ' info' : '');
+  t.lines.forEach((x, i) => {
+    if (i > 1) box.appendChild(document.createElement('br'));
+    if (i === 0) { const b = document.createElement('b'); b.textContent = x; box.appendChild(b); }
+    else box.appendChild(document.createTextNode(x));
+  });
 }
 
 /* ---------- 送信・コピー ---------- */
@@ -948,7 +992,7 @@ function receptionNotice(now) {
 function renderSendGuide(copied) {
   const steps = [
     copied ? '依頼文をコピーしました' : '上のボタンで依頼文をコピー（または「依頼窓口へ送る」）',
-    'LINE WORKSで「特定行為依頼窓口」のトークを開き、貼り付けて送信（個人宛て・公式グループには送らない）',
+    'LINE WORKSで「特定行為依頼窓口」のトークを開き、貼り付けて送信（個人宛て・公式グループには送らない）。トークが見つからない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加',
     '送信したら、下の「送信後にすること」を行う'
   ];
   const ol = document.createElement('ol');
@@ -1005,7 +1049,7 @@ function reset() {
   Object.assign(st, { role: '', entry: null, group: '', action: '', urgency: '', callback: '', support: '', eduType: '', ward: '' });
   qsa('.btn.sel').forEach(x => x.classList.remove('sel'));
   qsa('input:not([type=checkbox]), textarea').forEach(x => x.value = '');
-  qsa('.precheck').forEach(x => x.checked = false);
+  qsa('.precheck, .prechoice').forEach(x => x.checked = false);
   qs('#remember').checked = false;
   loadRequester();
   show('top');
@@ -1046,9 +1090,7 @@ qs('#next').onclick = () => {
     saveRequester();
     buildSummary();
     qs('#copyPreview').value = buildRequestText();
-    const t = receptionNotice(new Date());
-    qs('#timeNotice').textContent = t;
-    qs('#timeNotice').classList.toggle('hide', !t);
+    renderTimeNotice(receptionNotice(new Date()));
     renderSendGuide(false);
     doneItems('#afterList');
     show('confirm');
@@ -1058,21 +1100,53 @@ qs('#next').onclick = () => {
   if (st.screen === 'done') { reset(); }
 };
 
+// ステップ表示を押して前の画面へ戻る（入力内容は残す）
+function goStep(target) {
+  if (st.screen === 'done') return;
+  if (order.indexOf(target) >= order.indexOf(st.screen)) return;
+  if (target === 'select') {
+    show('select');
+    if (st.entry && st.entry.type === 'patient') renderActions(); else renderEntries();
+    return;
+  }
+  show(target);
+}
+qsa('.step').forEach(x => {
+  x.onclick = () => goStep(x.dataset.s);
+  x.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goStep(x.dataset.s); } };
+});
+
 qs('#help').onclick = () => toggle('helpModal', true);
 qsa('[data-close]').forEach(b => b.onclick = () => toggle(b.dataset.close, false));
 qs('#copyBtn').onclick = copyText;
 if (navigator.share) {
   qs('#shareBtn').classList.remove('hide');
-  qs('#shareBtn').onclick = shareText;
+  qs('#shareBtn').onclick = () => toggle('shareModal', true);
+  // 共有メニューはこのボタンの操作で開く（送信先の確認を挟む）
+  qs('#shareOk').onclick = () => { toggle('shareModal', false); shareText(); };
 }
 
 // Enterで次の入力欄へ（複数行の欄は改行のまま）
 function moveNext(e) {
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
-  const list = qsa('.screen.on input:not([type=checkbox]), .screen.on textarea').filter(x => x.offsetParent !== null);
+  // 文字の入力欄と、選択ボタンの群れ（病棟・依頼内容など）を画面の順に並べる
+  const groups = '#wardBox, #support, #eduType, #urgency, #callback';
+  const list = qsa('.screen.on input:not([type=checkbox]):not([type=radio]), .screen.on textarea, '
+    + groups.split(', ').map(g => '.screen.on ' + g).join(', ')).filter(x => x.offsetParent !== null);
   const i = list.indexOf(e.target);
   e.preventDefault();
-  if (i >= 0 && i < list.length - 1) list[i + 1].focus(); else e.target.blur();
+  for (let k = i + 1; k < list.length; k++) {
+    const x = list[k];
+    if (x.matches(groups)) {
+      if (x.querySelector('.sel')) continue;      // 選択済みの群れは飛ばす
+      const b = x.querySelector('.btn');
+      if (b) { b.focus({ preventScroll: true }); x.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return;
+    }
+    x.focus();
+    return;
+  }
+  e.target.blur();
 }
 qsa('.screen input:not([type=checkbox])').forEach(x => {
   x.setAttribute('enterkeyhint', 'next');

@@ -46,6 +46,7 @@ function parse(text){
         await pg.locator('#urgency .btn').nth(1).click();await pg.locator('#callback .btn').first().click();
         await pg.fill('#note','合成データ');
         for(const c of await pg.locator('.precheck').all()) await c.check();
+        for(const c of await pg.locator('.prechoice[id$="_0"]').all()) await c.check();
         await pg.click('#next');
         const scr=await pg.evaluate(()=>st.screen);
         const text=await pg.inputValue('#copyPreview');
