@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v8</title>
+  <title>特定行為依頼窓口 v9</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -184,6 +184,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .howto .flow.ok { color: var(--main); font-weight: 700; }
 .howto .note { font-size: 12px; color: #6b7f78; margin: 12px 0 0; line-height: 1.7; }
 .howto .nb { white-space: nowrap; }
+.btn .soon { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; color: #9a6b00; }
 .done-list { margin: 6px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--text); }
 .done-list li { margin-bottom: 6px; }
 
@@ -424,6 +425,14 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
   </div>
 </div>
 
+<div class="modal" id="futureModal">
+  <div class="sheet warn">
+    <h3 id="futureTitle"></h3>
+    <p id="futureBody"></p>
+    <button class="next" data-close="futureModal">戻る</button>
+  </div>
+</div>
+
 <div class="modal" id="urgentModal">
   <div class="sheet warn">
     <h3>緊急時は直接連絡してください</h3>
@@ -586,12 +595,22 @@ const checkItems = {
 /* 受付時間（設定シートT3・T4・S列と同じ値） */
 const RECEPT_START = 10 * 60;
 const RECEPT_END   = 15 * 60;
+// 祝日（2026〜2031年。春分・秋分は計算による予定日。年1回、Excel設定シートS列とあわせて確認）
 const HOLIDAYS = [
   '2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04',
   '2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12',
   '2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22',
   '2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23',
-  '2027-10-11','2027-11-03','2027-11-23','2028-01-01','2028-01-10','2028-02-11','2028-02-23','2028-03-20'
+  '2027-10-11','2027-11-03','2027-11-23','2028-01-01','2028-01-10','2028-02-11','2028-02-23','2028-03-20',
+  '2028-04-29','2028-05-03','2028-05-04','2028-05-05','2028-07-17','2028-08-11','2028-09-18','2028-09-22',
+  '2028-10-09','2028-11-03','2028-11-23','2029-01-01','2029-01-08','2029-02-11','2029-02-12','2029-02-23',
+  '2029-03-20','2029-04-29','2029-04-30','2029-05-03','2029-05-04','2029-05-05','2029-07-16','2029-08-11',
+  '2029-09-17','2029-09-23','2029-09-24','2029-10-08','2029-11-03','2029-11-23','2030-01-01','2030-01-14',
+  '2030-02-11','2030-02-23','2030-03-20','2030-04-29','2030-05-03','2030-05-04','2030-05-05','2030-05-06',
+  '2030-07-15','2030-08-11','2030-08-12','2030-09-16','2030-09-23','2030-10-14','2030-11-03','2030-11-04',
+  '2030-11-23','2031-01-01','2031-01-13','2031-02-11','2031-02-23','2031-02-24','2031-03-21','2031-04-29',
+  '2031-05-03','2031-05-04','2031-05-05','2031-05-06','2031-07-21','2031-08-11','2031-09-15','2031-09-23',
+  '2031-10-13','2031-11-03','2031-11-23','2031-11-24'
 ];
 
 const STORE_KEY = 'tokutei-irai-requester';
@@ -716,6 +735,18 @@ const actionBreaks = {
   '人工呼吸器離脱':               ['人工呼吸器', '離脱']
 };
 
+// 受付開始前の行為（開始日より前は選ぶと案内を出し、入力へ進めない）
+const futureActions = {
+  'PICC挿入':         { start: '2027-04-01', label: '2027年4月〜' },
+  'ミッドライン挿入': { start: '2027-04-01', label: '2027年4月〜' }
+};
+function futureOf(a) {
+  const f = futureActions[a];
+  if (!f) return null;
+  const d = new Date(), ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return ymd < f.start ? f : null;
+}
+
 function renderActions() {
   qs('#entryBox').classList.add('hide');
   const box = qs('#actionBox');
@@ -762,7 +793,20 @@ function renderActions() {
         p.textContent = a.slice(k);
         s.appendChild(p);
       }
+      const fut = futureOf(a);
+      if (fut) {
+        const t = document.createElement('span');
+        t.className = 'soon';
+        t.textContent = fut.label;
+        b.appendChild(t);
+      }
       b.onclick = () => {
+        if (fut) {
+          qs('#futureTitle').textContent = a + 'は2027年4月から受付予定です';
+          qs('#futureBody').textContent = a + 'は、2027年4月からこの窓口での受付を予定しています。現在は、麻酔科で依頼を受けながら研修として実施しています。現在の依頼は、麻酔科へお願いします。';
+          toggle('futureModal', true);
+          return;
+        }
         st.group = g.label;
         st.action = a;
         selectOne(box, b);

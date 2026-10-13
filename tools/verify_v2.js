@@ -26,6 +26,8 @@ function parse(text){
 (async()=>{
   const br=await chromium.launch(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{});
   const pg=await br.newPage({viewport:{width:390,height:844}});
+  // 受付開始前の行為（PICC・ミッドライン）も全経路を確かめるため、日付を開始後に固定できる（VERIFY_DATE=2027-04-02 など）
+  if(process.env.VERIFY_DATE) await pg.clock.setFixedTime(new Date(process.env.VERIFY_DATE+'T11:00:00'));
   await pg.goto(path);
   let n=0,fail=0;const errs=[];pg.on('pageerror',e=>errs.push(e.message));
   await pg.screenshot({path:out+'/s1_top.png',fullPage:true});
