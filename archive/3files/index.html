@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LINEWORKS UI Mock</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>特定看護師 相談・依頼窓口</h1>
+    <p>院内説明用のスマホUIモックです。トップ→選択→入力→確認→完了の流れを、単一HTMLで再現しています。</p>
+  </div>
+
+  <div class="phone">
+
+    <!-- ヘッダー：タイトル・サブテキスト・ステッパー -->
+    <div class="head">
+      <h2 id="title">職種を選択してください</h2>
+      <p id="sub">最短3クリックで入力画面へ進む構成です。下部には固定の「使い方・依頼方法」を置いています。</p>
+      <div class="steps">
+        <div class="step on"  data-s="top">トップ</div>
+        <div class="step"     data-s="select">選択</div>
+        <div class="step"     data-s="input">入力</div>
+        <div class="step"     data-s="confirm">確認</div>
+        <div class="step"     data-s="done">完了</div>
+      </div>
+    </div>
+
+    <!-- スクリーン群 -->
+    <div class="body">
+
+      <!-- SCREEN: top -->
+      <section class="screen on" data-screen="top">
+        <div class="card">
+          <h3>職種選択</h3>
+          <p>職種に応じて第2階層を切り替えます。</p>
+        </div>
+        <div class="grid">
+          <button class="btn role doctor" data-role="doctor">
+            <strong>医師</strong>
+            <span>具体的行為名 / 意思決定支援 / 教育その他</span>
+          </button>
+          <button class="btn role nurse" data-role="nurse">
+            <strong>看護師</strong>
+            <span>患者相談 / 処置依頼 / 勉強会相談</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN: select -->
+      <section class="screen" data-screen="select">
+        <div class="card">
+          <h3 id="menuTitle">入口を選択</h3>
+          <p id="menuSub">内容に応じた具体名へ進みます。</p>
+        </div>
+        <div class="grid" id="entryBox"></div>
+
+        <div class="card hide" id="detailCard">
+          <h3 id="detailTitle">具体名を選択</h3>
+          <p id="detailSub">依頼者が判断しやすい具体名を前面に出しています。</p>
+        </div>
+        <div class="grid hide" id="detailBox"></div>
+
+        <div class="card hide" id="actionCard">
+          <h3 id="actionTitle">具体的な特定行為を選択</h3>
+          <p id="actionSub">この行為で入力画面へ進みます。</p>
+        </div>
+        <div class="grid hide" id="actionBox"></div>
+      </section>
+
+      <!-- SCREEN: input -->
+      <section class="screen" data-screen="input">
+        <div class="card">
+          <h3>入力</h3>
+          <p id="path"></p>
+        </div>
+
+        <div class="card">
+          <h3>依頼者情報</h3>
+          <div class="field">
+            <label>氏名・所属部署</label>
+            <input id="name" placeholder="例）山田 花子 / 3階病棟">
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>連絡先（内線・PHS）</label>
+            <input id="contact" placeholder="必須">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>緊急度</h3>
+          <div class="row" id="urgency"></div>
+        </div>
+
+        <div class="card">
+          <h3>折り返し希望</h3>
+          <div class="row" id="callback"></div>
+        </div>
+
+        <!-- 患者情報エリア（患者相談・処置系） -->
+        <div id="patientArea">
+          <div class="card">
+            <h3>対象患者</h3>
+            <div class="field">
+              <label id="pidLabel">患者ID</label>
+              <input id="pid" placeholder="必須">
+            </div>
+            <div class="field hide" id="wardWrap" style="margin-top:10px">
+              <label id="wardLabel">患者の病棟</label>
+              <input id="ward" placeholder="例）3階東病棟">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label id="pnameLabel">患者氏名（任意）</label>
+              <input id="pname">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label>現在の状況・説明</label>
+              <textarea id="status"></textarea>
+            </div>
+            <p id="patientHint" style="margin-top:10px">患者IDを基本とし、患者氏名は任意入力です。</p>
+          </div>
+          <div class="card">
+            <h3>状況・依頼内容</h3>
+            <div class="grid" id="support"></div>
+            <div class="field" style="margin-top:10px">
+              <label>補足説明（任意）</label>
+              <textarea id="point"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 教育・勉強会エリア -->
+        <div id="eduArea" class="hide">
+          <div class="card">
+            <h3>依頼内容</h3>
+            <div class="field">
+              <label>対象部署</label>
+              <input id="dept">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label>希望する内容</label>
+              <div class="grid" id="eduType"></div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label>対象者・参加予定人数</label>
+              <input id="members">
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label>希望時期</label>
+              <input id="timing">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="field">
+            <label>補足・自由記載</label>
+            <textarea id="note"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: confirm -->
+      <section class="screen" data-screen="confirm">
+        <div class="card">
+          <h3>入力内容の確認</h3>
+          <p>送信処理は行わず、確認表示までを実装しています。</p>
+        </div>
+        <div class="summary" id="summary"></div>
+      </section>
+
+      <!-- SCREEN: done -->
+      <section class="screen" data-screen="done">
+        <div class="card">
+          <h3>【特定看護師 相談窓口 受付確認】</h3>
+          <p>ご相談を受け付けました。担当者が確認後、折り返しご連絡いたします。緊急の場合は内線 XXXXXXX まで直接ご連絡ください。</p>
+          <p id="doneAt"></p>
+        </div>
+        <div class="card">
+          <h3>説明ポイント</h3>
+          <p>職種分岐、具体名からの最短導線、緊急時ブロック、固定フッター導線をこの画面で確認できます。</p>
+        </div>
+      </section>
+
+    </div><!-- /.body -->
+
+    <!-- フッター：メッセージ・ナビゲーション・ヘルプ -->
+    <div class="footer">
+      <div class="msg hide" id="msg"></div>
+      <div class="nav">
+        <button class="back" id="back">戻る</button>
+        <button class="next" id="next">次へ進む</button>
+      </div>
+      <div class="help">
+        <button id="help">？ 使い方・依頼方法</button>
+      </div>
+    </div>
+
+  </div><!-- /.phone -->
+</div><!-- /.wrap -->
+
+<!-- モーダル：使い方 -->
+<div class="modal" id="helpModal">
+  <div class="sheet">
+    <h3>使い方・依頼方法</h3>
+    <p>入口を選び、具体名を押すだけで入力画面へ進む想定です。</p>
+    <ul>
+      <li>職種によって表示ボタンを切り替えます。</li>
+      <li>患者相談・処置依頼は行為名から最短で到達します。</li>
+      <li>緊急時はこのフォームではなく、主治医・担当医・ドクターハリー・RRTへ連絡します。</li>
+    </ul>
+    <button class="next" onclick="toggle('helpModal',false)">閉じる</button>
+  </div>
+</div>
+
+<!-- モーダル：緊急時警告 -->
+<div class="modal" id="urgentModal">
+  <div class="sheet warn">
+    <h3>緊急時は直接連絡してください</h3>
+    <p><b>緊急</b> の場合はこのフォームではなく、主治医・担当医・ドクターハリー・RRTへ直接連絡してください。状況が落ち着いたら、経緯をこの窓口からご報告ください。</p>
+    <button class="next" onclick="toggle('urgentModal',false)">確認しました</button>
+  </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
