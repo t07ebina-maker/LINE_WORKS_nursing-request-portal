@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v2</title>
+  <title>特定行為依頼窓口 チャット版 v3</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v2（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v3（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -197,7 +197,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
       <li>LINE WORKSに「特定行為依頼窓口」のトークがない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加してください。</li>
       <li>受付時間：平日10時～15時（祝日を除く）。時間外の依頼は、次の運用日の10時～11時に確認します。</li>
       <li>受付時間内の依頼でも、当日の対応を確約するものではありません。</li>
-      <li>緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。</li>
+      <li>緊急時はこの窓口を使わず、電話等で直接連絡してください（看護師は主治医・担当医・ドクターハリー・RRT等へ）。</li>
     </ul>
     <button class="next" data-close="helpModal">閉じる</button>
   </div>
@@ -430,7 +430,8 @@ function nextKey(s) {
     ? ['eduType', 'dept', 'members', 'timing']
     : [...(isSingle(s.entry) ? [] : ['group']), 'action', 'support', 'pid', 'pname', 'ward', 'status'];
   seq.push('urgency', 'callback', 'note', 'name', 'contact', 'remember');
-  if (!edu && s.role === 'nurse') seq.push('check1', 'check2');
+  // 送る前の確認：一時指示の確認（check1）は特定行為の依頼だけ
+  if (!edu && s.role === 'nurse') seq.push(...(isNonAct(s) ? [] : ['check1']), 'check2');
   for (const k of seq) {
     if (k === 'group' || k === 'action') { if (!s[k]) return k; continue; }
     if (!(k in s)) return k;
@@ -493,8 +494,9 @@ function question(k, s) {
     case 'timing':
       return { text: '希望時期を入力してください（任意）。', type: 'text', optional: '入力せずに進む' };
     case 'urgency':
+      // 患者の依頼だけ緊急時の案内を出す（勉強会・教育には出さない）
       return { text: '緊急度を選んでください。', type: 'choice', options: URGENCY.map(o => [o, o]),
-               after: { cls: 'warn', text: '緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。' } };
+               after: emergencyText(s) ? { cls: 'warn', text: emergencyText(s) } : null };
     case 'callback':
       return { text: '折り返し電話を希望しますか。', type: 'choice', options: CALLBACK.map(o => [o, o]) };
     case 'note':
@@ -836,7 +838,11 @@ function renderDone(s) {
   bot(c).style.padding = '0';
   c.parentNode.style.border = '0';
   c.parentNode.style.background = 'none';
-  bot('緊急時や状態が悪化した場合は、返答を待たずに主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。', 'notice');
+  if (emergencyText(s)) {
+    bot(s.role === 'doctor'
+      ? '緊急の場合は、返答を待たずに電話等で直接連絡してください。'
+      : '緊急時や状態が悪化した場合は、返答を待たずに主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。', 'notice');
+  }
 
   const box = qs('#answer');
   box.innerHTML = '';
@@ -848,8 +854,24 @@ function renderDone(s) {
   box.appendChild(w);
 }
 
+// 特定行為ではない相談（意思決定支援・個別カンファレンス）。緊急時の案内・一時指示の確認を出さない
+const NON_ACTS = ['意思決定支援', '個別カンファレンス'];
+function isNonAct(s) { return NON_ACTS.includes(s.action); }
+
+// 緊急時の案内（看護師は院内の連絡先、医師は医師向け案内と同じ言い方。勉強会・教育、意思決定支援等は出さない）
+function emergencyText(s) {
+  if (s.entry.type === 'edu' || isNonAct(s)) return '';
+  return s.role === 'doctor'
+    ? '緊急の依頼はこの窓口を使わず、電話等で直接連絡してください。'
+    : '緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。';
+}
+
 function doneList(s) {
-  const items = s.role === 'doctor'
+  // 勉強会・教育は患者の対応がないため、共有と返答の2点だけ
+  const items = s.entry.type === 'edu' || (s.role === 'doctor' && isNonAct(s))
+    ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
+       '対応する特定看護師（実施者）から、直接返答があります。']
+    : s.role === 'doctor'
     ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
        '対応する特定看護師（実施者）から、直接返答があります。',
        '特定行為を依頼する場合は、指示簿カレンダーへの一時指示の記載をお願いします。']

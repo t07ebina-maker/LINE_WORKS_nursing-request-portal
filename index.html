@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v9</title>
+  <title>特定行為依頼窓口 v10</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -264,7 +264,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
             <span>特定行為の依頼／意思決定支援／教育・その他</span>
           </button>
         </div>
-        <div class="notice">緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。</div>
+        <div class="notice">緊急時はこの窓口を使わず、電話等で直接連絡してください（看護師は主治医・担当医・ドクターハリー・RRT等へ）。</div>
       </section>
 
       <!-- 入口・行為の選択 -->
@@ -384,7 +384,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
           <h3>送信後の流れ</h3>
           <ul class="done-list" id="doneList"></ul>
         </div>
-        <div class="notice">緊急時や状態が悪化した場合は、返答を待たずに主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。</div>
+        <div class="notice" id="doneNotice"></div>
       </section>
 
     </div>
@@ -409,7 +409,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
       <li>LINE WORKSに「特定行為依頼窓口」のトークがない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加してください。</li>
       <li>受付時間：平日10時～15時（祝日を除く）。時間外の依頼は、次の運用日の10時～11時に確認します。</li>
       <li>受付時間内の依頼でも、当日の対応を確約するものではありません。</li>
-      <li>緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。</li>
+      <li>緊急時はこの窓口を使わず、電話等で直接連絡してください（看護師は主治医・担当医・ドクターハリー・RRT等へ）。</li>
     </ul>
     <button class="next" data-close="helpModal">閉じる</button>
   </div>
@@ -436,7 +436,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 <div class="modal" id="urgentModal">
   <div class="sheet warn">
     <h3>緊急時は直接連絡してください</h3>
-    <p>緊急の場合はこの窓口ではなく、主治医・担当医・ドクターハリー・RRTへ直接連絡してください。状況が落ち着いてから、必要に応じてこの窓口へ依頼してください。</p>
+    <p id="urgentBody"></p>
     <button class="next" data-close="urgentModal">確認しました</button>
   </div>
 </div>
@@ -838,7 +838,7 @@ function chipBox(id, arr, key, cls) {
       setMsg('');
       st[key] = v;
       selectOne(box, b);
-      if (key === 'urgency' && v === '緊急') toggle('urgentModal', true);
+      if (key === 'urgency' && v === '緊急') showUrgent();
     };
     box.appendChild(b);
   });
@@ -865,7 +865,7 @@ function syncInput() {
     chipBox('support', opts.map(o => o.replace('補足欄', '自由記載')), 'support', 'choice');
   }
 
-  const checks = edu ? [] : checkItems[st.role];
+  const checks = edu ? [] : isNonAct() ? checkItems[st.role].filter(t => !Array.isArray(t)) : checkItems[st.role];
   qs('#checkCard').classList.toggle('hide', checks.length === 0);
   const cb = qs('#checkBox');
   cb.innerHTML = '';
@@ -927,7 +927,7 @@ function okInput() {
   if (lack.length) { setMsg('未入力の項目があります：' + lack.join('、')); return false; }
 
   if (st.urgency === '緊急') {
-    toggle('urgentModal', true);
+    showUrgent();
     setMsg('緊急の場合はこの窓口では送れません。直接連絡してください。');
     return false;
   }
@@ -1071,8 +1071,24 @@ function copyText() {
   }
 }
 
+// 特定行為ではない相談（意思決定支援・個別カンファレンス）。緊急時の案内・一時指示の確認を出さない
+const NON_ACTS = ['意思決定支援', '個別カンファレンス'];
+function isNonAct() { return NON_ACTS.includes(st.action); }
+
+// 緊急を選んだときの案内（看護師は院内の連絡先、医師は医師向け案内と同じ言い方）
+function showUrgent() {
+  qs('#urgentBody').textContent = st.role === 'nurse' && st.entry && st.entry.type !== 'edu' && !isNonAct()
+    ? '緊急の場合はこの窓口ではなく、主治医・担当医・ドクターハリー・RRTへ直接連絡してください。状況が落ち着いてから、必要に応じてこの窓口へ依頼してください。'
+    : '緊急の場合はこの窓口ではなく、電話等で直接連絡してください。';
+  toggle('urgentModal', true);
+}
+
 function doneItems(target) {
-  const items = st.role === 'doctor'
+  // 勉強会・教育は患者の対応がないため、共有と返答の2点だけ
+  const items = st.entry.type === 'edu' || (st.role === 'doctor' && isNonAct())
+    ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
+       '対応する特定看護師（実施者）から、直接返答があります。']
+    : st.role === 'doctor'
     ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
        '対応する特定看護師（実施者）から、直接返答があります。',
        '特定行為を依頼する場合は、指示簿カレンダーへの一時指示の記載をお願いします。']
@@ -1084,6 +1100,12 @@ function doneItems(target) {
   const ul = qs(target || '#doneList');
   ul.innerHTML = '';
   items.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+  // 送信後の緊急時の案内（勉強会・教育、意思決定支援等は出さない）
+  const n = qs('#doneNotice');
+  n.textContent = st.role === 'doctor'
+    ? '緊急の場合は、返答を待たずに電話等で直接連絡してください。'
+    : '緊急時や状態が悪化した場合は、返答を待たずに主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。';
+  n.classList.toggle('hide', st.entry.type === 'edu' || isNonAct());
 }
 
 /* ---------- リセット ---------- */
