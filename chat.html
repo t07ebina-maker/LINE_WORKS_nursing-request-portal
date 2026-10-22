@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v1</title>
+  <title>特定行為依頼窓口 チャット版 v2</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v1（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v2（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -49,7 +49,7 @@ body {
 .hero p  { margin: 2px 0 0; font-size: 12px; opacity: .95; }
 
 /* ---------- トーク ---------- */
-.log { flex: 1; overflow-y: auto; padding: 14px 12px 8px; display: flex; flex-direction: column; gap: 10px; }
+.log { position: relative; flex: 1; overflow-y: auto; padding: 14px 12px 8px; display: flex; flex-direction: column; gap: 10px; }
 
 .bot  { display: flex; gap: 8px; align-items: flex-start; max-width: 92%; }
 .icon {
@@ -84,6 +84,8 @@ body {
 .flow.ok { color: var(--main); font-weight: 700; }
 .note { font-size: 12px; color: #6b7f78; margin: 10px 0 0; line-height: 1.7; }
 .nb { white-space: nowrap; }
+.sendbox { display: grid; gap: 8px; }
+.sendbox .choice { border-radius: 14px; text-align: center; }
 .send-btn, .copy-btn {
   width: 100%; font: inherit; font-size: 16px; font-weight: 700;
   border: 0; border-radius: 14px; padding: 14px; cursor: pointer;
@@ -396,6 +398,7 @@ const TOLD     = '伝える（確認しました）';
 
 let hist = [];           // [{ key, value, label }]
 let flash = [];          // 次の描画で一度だけ出すボットの吹き出し
+let confirmTop = null;   // 確認画面で最初に見せる吹き出し
 
 function stateOf(h) {
   const s = { role: '', entry: null, group: '', action: '' };
@@ -586,6 +589,8 @@ function render() {
   }
   flash = [];
   log.scrollTop = log.scrollHeight;
+  // 確認画面は、入力内容の先頭が見える位置で止める（送るボタンは画面下にある）
+  if (confirmTop) { log.scrollTop = confirmTop.closest('.bot').offsetTop - 8; confirmTop = null; }
 }
 
 function answer(key, value, label) {
@@ -766,26 +771,17 @@ function renderConfirm(s) {
   const t = receptionNotice(new Date());
   bot(t.lines.join('\n'), t.info ? 'info' : 'notice');
 
-  // 送り方（v9と同じ：スマホは共有、PCはコピー）
+  // 送り方（v9と同じ：スマホは共有、PCはコピー）。ボタンは画面下に固定して出す
   const text = buildRequestText(s);
   const c2 = el('div', 'card');
   c2.appendChild(el('h3', '', '送り方'));
   if (canShare) {
-    c2.appendChild(el('div', 'howto-sub', '① LINE WORKSに直接送る（スマホ）'));
-    const sb = el('button', 'send-btn', '依頼窓口へ送る（LINE WORKS）');
-    sb.type = 'button';
-    sb.onclick = () => toggle('shareModal', true);
-    c2.appendChild(sb);
+    c2.appendChild(el('div', 'howto-sub', '① 画面下の「依頼窓口へ送る」を押す'));
     const f = el('p', 'flow');
     f.innerHTML = '→ LINE WORKS を選ぶ<br>→ 宛先「特定行為依頼窓口」を選ぶ<br>→ 送信';
     c2.appendChild(f);
   }
-  c2.appendChild(el('div', 'howto-sub', canShare ? '② コピーして貼り付ける（①が使えないとき）' : 'コピーして貼り付ける'));
-  const cb = el('button', 'copy-btn', '依頼文をコピー');
-  cb.type = 'button';
-  cb.onclick = copyText;
-  c2.appendChild(cb);
-  c2.appendChild(el('p', 'flow ok hide', '✓ 依頼文をコピーしました')).id = 'copyStatus';
+  c2.appendChild(el('div', 'howto-sub', canShare ? '② ①が使えないとき：画面下の「依頼文をコピー」を押す' : '画面下の「依頼文をコピー」を押す'));
   c2.appendChild(el('p', 'flow', isMobile
     ? '→ LINE WORKSで「特定行為依頼窓口」のトークを開き、貼り付けて送信'
     : '→ LINE WORKS（PC版）で「特定行為依頼窓口」のトークを開き、貼り付けて送信'));
@@ -811,14 +807,26 @@ function renderConfirm(s) {
   c3.parentNode.style.border = '0';
   c3.parentNode.style.background = 'none';
 
+  // 画面下：送るボタン → コピー → 送信した、の順
   const box = qs('#answer');
   box.innerHTML = '';
-  const w = el('div', 'choices long');
-  const b = el('button', 'choice primary', 'LINE WORKSで送信した');
+  const w = el('div', 'sendbox');
+  if (canShare) {
+    const sb = el('button', 'send-btn', '依頼窓口へ送る（LINE WORKS）');
+    sb.type = 'button';
+    sb.onclick = () => toggle('shareModal', true);
+    w.appendChild(sb);
+  }
+  const cb = el('button', canShare ? 'copy-btn' : 'send-btn', '依頼文をコピー');
+  cb.type = 'button';
+  cb.onclick = copyText;
+  w.appendChild(cb);
+  const b = el('button', 'choice', 'LINE WORKSで送信した → 送信後の流れへ');
   b.type = 'button';
   b.onclick = () => answer('sent', true, 'LINE WORKSで送信しました');
   w.appendChild(b);
   box.appendChild(w);
+  confirmTop = c1;
 }
 
 function renderDone(s) {
@@ -901,7 +909,7 @@ function shareText() {
 
 function copyText() {
   const preview = qs('#copyPreview');
-  const ok = () => { qs('#copyStatus').classList.remove('hide'); setMsg('依頼文をコピーしました。'); };
+  const ok = () => { setMsg('✓ 依頼文をコピーしました。LINE WORKSの「特定行為依頼窓口」のトークに貼り付けて送信してください。'); };
   const ng = () => { qs('.preview').open = true; preview.select(); setMsg('自動でコピーできませんでした。下の依頼文を長押しして全選択・コピーしてください。'); };
   const fallback = () => {
     preview.select();
