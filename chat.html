@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v5</title>
+  <title>特定行為依頼窓口 チャット版 v6</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v5（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v6（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -75,8 +75,11 @@ body {
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; width: 100%; }
 .card h3 { margin: 0 0 8px; font-size: 15px; }
 .summary { display: grid; gap: 6px; }
-.item { background: #f5f8f7; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 14px; }
-.item b { display: block; font-size: 12px; color: var(--sub); margin-bottom: 2px; }
+/* 確認内容は「項目名｜内容」の横並びにして縦を詰める */
+.summary { gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.item { display: grid; grid-template-columns: 6.5em 1fr; gap: 8px; background: #fff; border-top: 1px solid var(--line); padding: 7px 10px; font-size: 14px; line-height: 1.5; }
+.item:first-child { border-top: 0; }
+.item b { font-size: 12px; color: var(--sub); padding-top: 2px; }
 .item div { white-space: pre-wrap; word-break: break-all; }
 .howto-sub { font-size: 14px; font-weight: 700; color: var(--main-deep); margin: 12px 0 6px; }
 .howto-sub:first-of-type { margin-top: 0; }
@@ -85,7 +88,10 @@ body {
 .note { font-size: 12px; color: #6b7f78; margin: 10px 0 0; line-height: 1.7; }
 .nb { white-space: nowrap; }
 .sendbox { display: grid; gap: 8px; }
-.sendbox .choice { border-radius: 14px; text-align: center; }
+.sendbox .subrow { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.sendbox .choice { border-radius: 12px; text-align: center; padding: 8px 6px; font-size: 13px; }
+.bot.wide { max-width: 100%; }
+.bot.wide .bubble { flex: 1; min-width: 0; }
 .send-btn, .copy-btn {
   width: 100%; font: inherit; font-size: 16px; font-weight: 700;
   border: 0; border-radius: 14px; padding: 14px; cursor: pointer;
@@ -827,9 +833,8 @@ function renderConfirm(s) {
   bot(c1).style.padding = '0';
   c1.parentNode.style.border = '0';
   c1.parentNode.style.background = 'none';
-
-  const t = receptionNotice(new Date());
-  bot(t.lines.join('\n'), t.info ? 'info' : 'notice');
+  c1.closest('.bot').classList.add('wide');   // 確認内容は画面の幅いっぱいに出す
+  // 受付状況は上の帯に出ているので、ここでは繰り返さない
 
   // 送り方（v9と同じ：スマホは共有、PCはコピー）。ボタンは画面下に固定して出す
   const text = buildRequestText(s);
@@ -867,24 +872,26 @@ function renderConfirm(s) {
   c3.parentNode.style.border = '0';
   c3.parentNode.style.background = 'none';
 
-  // 画面下：送るボタン → コピー → 送信した、の順
+  // 画面下：大きい送るボタン1つ＋その下に小さい2つ（確認内容を広く見せるため低くまとめる）
   const box = qs('#answer');
   box.innerHTML = '';
   const w = el('div', 'sendbox');
+  const send = el('button', 'send-btn', canShare ? '依頼窓口へ送る（LINE WORKS）' : '依頼文をコピー');
+  send.type = 'button';
+  send.onclick = canShare ? () => toggle('shareModal', true) : copyText;
+  w.appendChild(send);
+  const row = el('div', 'subrow');
   if (canShare) {
-    const sb = el('button', 'send-btn', '依頼窓口へ送る（LINE WORKS）');
-    sb.type = 'button';
-    sb.onclick = () => toggle('shareModal', true);
-    w.appendChild(sb);
+    const cb = el('button', 'choice', '依頼文をコピー');
+    cb.type = 'button';
+    cb.onclick = copyText;
+    row.appendChild(cb);
   }
-  const cb = el('button', canShare ? 'copy-btn' : 'send-btn', '依頼文をコピー');
-  cb.type = 'button';
-  cb.onclick = copyText;
-  w.appendChild(cb);
-  const b = el('button', 'choice', 'LINE WORKSで送信した → 送信後の流れへ');
+  const b = el('button', 'choice', '送信した → 次へ');
   b.type = 'button';
   b.onclick = () => answer('sent', true, 'LINE WORKSで送信しました');
-  w.appendChild(b);
+  row.appendChild(b);
+  w.appendChild(row);
   box.appendChild(w);
   confirmTop = c1;
 }
