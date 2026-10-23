@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v4</title>
+  <title>特定行為依頼窓口 チャット版 v5</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v4（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v5（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -103,14 +103,28 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 }
 
 /* ---------- 回答欄（画面下） ---------- */
+/* トークの上に乗った板に見えるよう、白地・上に主色の線と影 */
 .composer {
   flex: none;
-  border-top: 1px solid var(--line);
-  background: #fbfdfc;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  position: relative;
+  border-top: 3px solid var(--main);
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  box-shadow: 0 -6px 16px rgba(31, 45, 42, .14);
+  padding: 12px 12px calc(10px + env(safe-area-inset-bottom));
   max-height: 55%;
   overflow-y: auto;
 }
+
+/* ---------- 受付状況の帯 ---------- */
+.status { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid; }
+.status .mark { font-size: 18px; line-height: 1; }
+.status b { display: block; font-size: 15px; }
+.status .sub { display: block; font-size: 12px; line-height: 1.5; }
+.status.open   { background: #e3f4ef; border-color: #a9d6cc; color: var(--main-deep); }
+.status.open .mark { color: var(--main); }
+.status.closed { background: #fde9c4; border-color: #e9b660; color: #6b4400; }
+.status.closed .mark { color: #c27a00; }
 .choices { display: flex; flex-wrap: wrap; gap: 6px; }
 .choices.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); }
 .choice {
@@ -183,6 +197,8 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
     <h1>特定行為依頼窓口</h1>
     <p>質問に答えると、LINE WORKSの「特定行為依頼窓口」へ送る依頼文ができます。</p>
   </div>
+
+  <div class="status" id="status" role="status"></div>
 
   <div class="log" id="log" aria-live="polite"></div>
 
@@ -571,10 +587,9 @@ function render() {
   log.innerHTML = '';
   setMsg('');
 
-  // 最初のあいさつと受付状況
+  // 受付状況はヘッダー下の帯に常に出す
+  renderStatus(receptionNotice(new Date()));
   bot('特定看護師への相談・依頼を受け付けます。');
-  const t = receptionNotice(new Date());
-  bot(t.lines.join('\n'), t.info ? 'info' : 'notice');
 
   // 答えた質問を順に再現する
   let newFrom = hist.length ? -1 : 0;   // ここから後ろの吹き出しをふわっと出す
@@ -618,6 +633,18 @@ function render() {
   log.scrollTop = log.scrollHeight;
   // 確認画面は、入力内容の先頭が見える位置で止める（送るボタンは画面下にある）
   if (confirmTop) { log.scrollTop = confirmTop.closest('.bot').offsetTop - 8; confirmTop = null; }
+}
+
+// 受付状況の帯（時間内は緑、時間外・運用日以外は橙。色だけでなく記号と文字でも区別する）
+function renderStatus(t) {
+  const bar = qs('#status');
+  bar.className = 'status ' + (t.info ? 'open' : 'closed');
+  bar.innerHTML = '';
+  bar.appendChild(el('span', 'mark', t.info ? '●' : '⚠'));
+  const box = el('div', '');
+  box.appendChild(el('b', '', t.lines[0]));
+  box.appendChild(el('span', 'sub', t.lines.slice(1).join(' ')));
+  bar.appendChild(box);
 }
 
 function answer(key, value, label) {
