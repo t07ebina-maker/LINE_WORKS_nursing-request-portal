@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v3</title>
+  <title>特定行為依頼窓口 チャット版 v4</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v3（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v4（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -150,6 +150,15 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 }
 .nav button:disabled { opacity: .4; cursor: default; }
 .hide { display: none !important; }
+
+/* 回答欄の上に出す質問文 */
+.qhead { font-size: 14px; font-weight: 700; color: var(--main-deep); line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; }
+.qwarn { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--urgent); }
+
+/* 新しく出た吹き出し・回答欄だけ、0.3秒でふわっと出す */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.new { animation: rise .3s ease both; }
+@media (prefers-reduced-motion: reduce) { .new { animation: none; } }
 
 /* ---------- モーダル（v9と同じ） ---------- */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
@@ -399,6 +408,7 @@ const TOLD     = '伝える（確認しました）';
 let hist = [];           // [{ key, value, label }]
 let flash = [];          // 次の描画で一度だけ出すボットの吹き出し
 let confirmTop = null;   // 確認画面で最初に見せる吹き出し
+let justAnswered = false; // 答えた直後の描画か（自分の答えの吹き出しもふわっと出す）
 
 function stateOf(h) {
   const s = { role: '', entry: null, group: '', action: '' };
@@ -567,14 +577,17 @@ function render() {
   bot(t.lines.join('\n'), t.info ? 'info' : 'notice');
 
   // 答えた質問を順に再現する
+  let newFrom = hist.length ? -1 : 0;   // ここから後ろの吹き出しをふわっと出す
   for (let n = 0; n < hist.length; n++) {
     if (hist[n].key === 'sent') { me(hist[n].label); continue; }
     const s = stateOf(hist.slice(0, n));
     const q = question(hist[n].key, s);
     bot(q.text);
     if (q.after) bot(q.after.text, q.after.cls);
+    if (n === hist.length - 1 && justAnswered) newFrom = log.children.length;
     me(hist[n].label);
   }
+  if (newFrom < 0) newFrom = log.children.length;   // 1つ戻る・最初からは次の質問だけ
 
   const s = stateOf(hist);
   const k = nextKey(s);
@@ -588,8 +601,20 @@ function render() {
     if (q.after) bot(q.after.text, q.after.cls);
     flash.forEach(f => bot(f.text, f.cls));
     renderAnswer(k, q);
+    if (flash.length) setMsg(flash[0].text);   // 答えのすぐ上にも出す
   }
   flash = [];
+  justAnswered = false;
+
+  // 新しく出たものだけ、少しずつずらしてふわっと出す（全体の描き直しは見せない）
+  const fresh = [...log.children].slice(newFrom);
+  fresh.forEach((x, i) => { x.classList.add('new'); x.style.animationDelay = (i * 0.12) + 's'; });
+  const ans = qs('#answer');
+  ans.classList.remove('new');
+  void ans.offsetWidth;   // アニメーションをやり直す
+  ans.classList.add('new');
+  ans.style.animationDelay = (fresh.length * 0.12) + 's';
+
   log.scrollTop = log.scrollHeight;
   // 確認画面は、入力内容の先頭が見える位置で止める（送るボタンは画面下にある）
   if (confirmTop) { log.scrollTop = confirmTop.closest('.bot').offsetTop - 8; confirmTop = null; }
@@ -597,12 +622,18 @@ function render() {
 
 function answer(key, value, label) {
   hist.push({ key: key, value: value, label: label });
+  justAnswered = true;
   render();
 }
 
 function renderAnswer(k, q) {
   const box = qs('#answer');
   box.innerHTML = '';
+
+  // 質問文を答えのすぐ上にも出す（読む場所と押す場所を近づけ、視線の上下を減らす）
+  const head = el('div', 'qhead', q.text);
+  if (q.after) head.appendChild(el('span', 'qwarn', q.after.text));
+  box.appendChild(head);
 
   if (q.options) {
     const wrap = document.createElement('div');
