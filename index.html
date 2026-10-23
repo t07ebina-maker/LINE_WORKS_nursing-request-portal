@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v10</title>
+  <title>特定行為依頼窓口 v11</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -947,12 +947,14 @@ function okInput() {
    ・依頼内容／緊急度／折り返し希望は「・」付き1行
    ・最初の項目名より前の行（依頼者・連絡先）は原文にのみ残る
    ・※で始まる行は読み飛ばされる
+   ・空行と、項目名の後ろの「：」は読み取りに影響しない（見やすさのために入れる）
 */
 function buildRequestText() {
   const L = [];
   const block = (label, value, bullet) => {
-    L.push(label);
-    L.push(value ? (bullet ? '・' + value : value) : '');
+    L.push('');
+    L.push(label + '：');
+    if (value) L.push(bullet ? '・' + value : value);
   };
 
   L.push('【特定行為依頼窓口への依頼】');
@@ -972,6 +974,7 @@ function buildRequestText() {
     return L.join('\n');
   }
 
+  L.push('');
   L.push(st.entry.no + '_' + st.entry.label + '(依頼)');
   block(st.group + 'の具体的な特定行為', st.action, true);
   block('依頼内容', st.support, true);

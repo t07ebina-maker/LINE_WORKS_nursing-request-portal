@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v6</title>
+  <title>特定行為依頼窓口 チャット版 v7</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v6（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v7（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v9と同じ
    ============================================================ */
 :root {
@@ -745,19 +745,21 @@ function renderAnswer(k, q) {
   if (!isMobile) inp.focus();
 }
 
-/* ---------- 依頼文の作成（v9と同じ書式） ----------
+/* ---------- 依頼文の作成（統合版v11と同じ書式） ----------
    ・「番号_入口名(依頼)」の行 → 依頼メニュー
    ・項目名は1行に単独、値は次の行
    ・「分類名の具体的な特定行為」の下に「・行為名」
    ・依頼内容／緊急度／折り返し希望は「・」付き1行
    ・最初の項目名より前の行（依頼者・連絡先）は原文にのみ残る
    ・※で始まる行は読み飛ばされる
+   ・空行と、項目名の後ろの「：」は読み取りに影響しない（見やすさのために入れる）
 */
 function buildRequestText(s) {
   const L = [];
   const block = (label, value, bullet) => {
-    L.push(label);
-    L.push(value ? (bullet ? '・' + value : value) : '');
+    L.push('');
+    L.push(label + '：');
+    if (value) L.push(bullet ? '・' + value : value);
   };
 
   L.push('【特定行為依頼窓口への依頼】');
@@ -777,6 +779,7 @@ function buildRequestText(s) {
     return L.join('\n');
   }
 
+  L.push('');
   L.push(s.entry.no + '_' + s.entry.label + '(依頼)');
   block(s.group + 'の具体的な特定行為', s.action, true);
   block('依頼内容', s.support, true);
