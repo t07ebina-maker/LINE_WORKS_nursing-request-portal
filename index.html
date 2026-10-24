@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v11</title>
+  <title>特定行為依頼窓口 v12</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -133,6 +133,11 @@ body {
 .row  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ward-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+/* 所属：区分を選ぶと、その区分の部署・診療科を並べる */
+.aff-cat  { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
+.aff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+#wardSame, #deptSame { margin-bottom: 8px; }
+#deptCat { margin-top: 0; }
 
 /* ---------- 入力欄 ---------- */
 .field { display: grid; gap: 6px; margin-top: 12px; }
@@ -257,7 +262,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
         <div class="grid">
           <button class="btn role nurse" data-role="nurse">
             <strong>看護師</strong>
-            <span>患者の相談・依頼／勉強会・教育</span>
+            <span>患者さんの相談・依頼／勉強会・教育</span>
           </button>
           <button class="btn role doctor" data-role="doctor">
             <strong>医師</strong>
@@ -280,36 +285,51 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
         <div class="card">
           <h3>依頼者</h3>
           <div class="field">
-            <label for="name">氏名・所属<span class="req">必須</span></label>
+            <label for="name">氏名<span class="req">必須</span></label>
             <input id="name" autocomplete="name">
+          </div>
+          <div class="field">
+            <label>所属<span class="req">必須</span></label>
+            <div class="aff-cat" id="affCat"></div>
+            <div class="aff-grid hide" id="affBox"></div>
+          </div>
+          <div class="field hide" id="affOtherField">
+            <label for="affOther">所属（その他）<span class="req">必須</span></label>
+            <input id="affOther">
           </div>
           <div class="field">
             <label for="contact">連絡先（内線・PHS）<span class="req">必須</span></label>
             <input id="contact" inputmode="tel">
           </div>
-          <label class="check"><input type="checkbox" id="remember">この端末に氏名・連絡先を記憶する（個人の端末のみ）</label>
+          <label class="check"><input type="checkbox" id="remember">この端末に氏名・所属・連絡先を記憶する（個人の端末のみ）</label>
         </div>
 
         <div id="patientArea">
           <div class="card">
-            <h3>対象患者</h3>
+            <h3>対象の患者さん</h3>
             <div class="field">
-              <label for="pid" id="pidLabel">患者ID</label>
+              <label for="pid" id="pidLabel">患者さんのID</label>
               <input id="pid" inputmode="numeric">
             </div>
             <div class="field">
-              <label for="pname">患者氏名<span class="req">必須</span></label>
+              <label for="pname">患者さんの氏名<span class="req">必須</span></label>
               <input id="pname">
             </div>
             <div class="field">
-              <label>入院病棟<span class="req">必須</span></label>
-              <div class="ward-grid" id="wardBox"></div>
+              <label>患者さんの病棟・部署<span class="req">必須</span></label>
+              <div class="aff-cat hide" id="wardSame"></div>
+              <div class="aff-cat" id="wardCat"></div>
+              <div class="aff-grid hide" id="wardBox"></div>
             </div>
           </div>
 
           <div class="card">
             <h3>依頼内容<span class="req">必須</span></h3>
             <div class="grid" id="support"></div>
+            <div class="field hide" id="supportOtherField">
+              <label for="supportOther">依頼内容（その他）<span class="req">必須</span></label>
+              <input id="supportOther">
+            </div>
             <div class="field">
               <label for="status" id="statusLabel">現在の状況・説明</label>
               <textarea id="status"></textarea>
@@ -321,17 +341,31 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
           <div class="card">
             <h3>希望する内容<span class="req">必須</span></h3>
             <div class="grid" id="eduType"></div>
-            <div class="field">
-              <label for="dept">対象部署<span class="req">必須</span></label>
-              <input id="dept">
+            <div class="field hide" id="eduOtherField">
+              <label for="eduOther">希望する内容（その他）<span class="req">必須</span></label>
+              <input id="eduOther">
+            </div>
+            <div class="field hide" id="themeField">
+              <label for="theme">勉強会のテーマ<span class="req">必須</span></label>
+              <input id="theme">
             </div>
             <div class="field">
-              <label for="members">対象者・参加予定人数<span class="opt">任意</span></label>
-              <input id="members">
+              <label>対象部署<span class="req">必須</span></label>
+              <div class="aff-cat hide" id="deptSame"></div>
+              <div class="aff-grid" id="deptCat"></div>
+              <div class="aff-grid hide" id="deptBox"></div>
+            </div>
+            <div class="field hide" id="deptOtherField">
+              <label for="deptOther">対象部署（その他）<span class="req">必須</span></label>
+              <input id="deptOther">
             </div>
             <div class="field">
-              <label for="timing">希望時期<span class="opt">任意</span></label>
-              <input id="timing">
+              <label>参加予定人数<span class="opt">任意</span></label>
+              <div class="aff-grid" id="membersBox"></div>
+            </div>
+            <div class="field">
+              <label>希望時期<span class="opt">任意</span></label>
+              <div class="aff-grid" id="timingBox"></div>
             </div>
           </div>
         </div>
@@ -444,8 +478,9 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 <script>
 /* ============================================================
    データ定義
-   出力文面は「受付・集計・評価」Excelの一覧へ登録（M_Uketsuke）で
-   読み取れる形式にそろえる。項目名を変えるときは設定シートB列も変える。
+   出力文面は「受付・集計・評価」Excelの一覧へ登録（M_Uketsuke v8）で
+   読み取れる形式にそろえる。依頼メニュー・見出し・項目名を変えるときは
+   M_Uketsuke の対応表（MenuFromAction・NewKeyLabel）も変える。
    ============================================================ */
 
 const data = {
@@ -519,9 +554,9 @@ const requestOptions = {
     '腹腔ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
     '創部ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
     '感染徴候への薬剤臨時投与':     ['感染徴候があり薬剤の臨時投与を依頼したい','抗菌薬の選択・調整を相談したい','その他（補足欄に記載）'],
-    '感染対応の相談':               ['感染対応について相談したい','その他（補足欄に記載）'],
-    '意思決定支援':                 ['患者・家族との意思決定支援を依頼したい','治療方針について一緒に整理したい','その他（補足欄に記載）'],
-    '個別カンファレンス':           ['個別カンファレンスを依頼したい','多職種で方針整理をしたい','その他（補足欄に記載）']
+    '感染対応の相談':               ['感染徴候があり対応を相談したい','感染対策（隔離・予防策）について相談したい','その他（補足欄に記載）'],
+    '意思決定支援':                 ['治療の選択について、患者さん・家族の意思決定を支援してほしい','患者さん・家族・医療者の意見の調整を手伝ってほしい','意思決定支援の進め方を相談したい','その他（補足欄に記載）'],
+    '個別カンファレンス':           ['多職種カンファレンスを開いて進行してほしい','予定しているカンファレンスに参加してほしい','その他（補足欄に記載）']
   },
   nurse: {
     '気管チューブ位置調整':         ['チューブがずれている可能性があり確認・調整を依頼したい','固定がゆるく入れ直しを依頼したい','その他（補足欄に記載）'],
@@ -541,7 +576,7 @@ const requestOptions = {
     'Na・K・Cl投与量調整':          ['電解質に異常値があり補正の判断を相談したい','投与量の変更を依頼したい','補正後の観察について相談したい','その他（補足欄に記載）'],
     '降圧剤投与量調整':             ['血圧が不安定で医師への報告前にアセスメントを相談したい','降圧剤の投与量調整を依頼したい','調整後の観察について相談したい','その他（補足欄に記載）'],
     '抗精神病薬臨時投与':           ['興奮・せん妄があり医師への報告前に対応を相談したい','抗精神病薬の投与を依頼したい','その他（補足欄に記載）'],
-    '意思決定支援':                 ['患者対応について個別に相談したい','意思決定支援を依頼したい','その他（補足欄に記載）'],
+    '意思決定支援':                 ['治療の選択について、患者さん・家族の意思決定を支援してほしい','患者さん・家族・医療者の意見の調整を手伝ってほしい','意思決定支援の進め方を相談したい','その他（補足欄に記載）'],
     'CV抜去':                       ['医師から抜去の話が出ており実施を依頼したい','刺入部に発赤・滲出液があり抜去の判断を相談したい','退院前に抜去の実施を依頼したい','その他（補足欄に記載）'],
     'PICC挿入':                     ['末梢確保が困難でPICC挿入を相談したい','長期投与が必要でPICC適応について相談したい','その他（補足欄に記載）'],
     '壊死組織除去（デブリドマン）': ['壊死組織があるため評価・処置を依頼したい','デブリドマンの実施を依頼したい','創部の変化があり一緒に確認してほしい','その他（補足欄に記載）'],
@@ -557,11 +592,46 @@ const requestOptions = {
   }
 };
 
-const wardOptions = [
-  '西４', '西６', '西７', '西８', '西９',
-  '東５', '東６', '東７', '東８', '東９',
-  '東１０', '東１１', '外来１', '外来２'
+// 患者さんの病棟・部署（区分 → 病棟・部署）。数字は半角（Excel設定シートの部署名と同じ書き方）
+const wardGroups = [
+  { label: '病棟', items: ['西4', '西6', '西7', '西8', '西9', '東6', '東7', '東9', '東10'] },
+  { label: '重症', items: ['東5ICU', '東8HCU'] },
+  { label: '外来', items: ['外来1', '外来2', '救急外来', '化学療法室', '内視鏡放射線治療室', '血液浄化センター'] }
 ];
+const wardOptions = wardGroups.flatMap(g => g.items);
+
+// 依頼者の所属（区分 → 部署・診療科）。診療科は病院公式サイトの表記
+const AFF_OTHER = 'その他';
+const affiliationOptions = {
+  nurse: [
+    { label: '病棟',       items: ['西4', '西6', '西7', '西8', '西9', '東6', '東7', '東9', '東10'] },
+    { label: '重症・手術', items: ['東5ICU', '東8HCU', '手術室', 'カテーテル検査室'] },
+    { label: '外来',       items: ['外来1', '外来2', '救急外来', '化学療法室', '内視鏡放射線治療室', '血液浄化センター'] },
+    { label: 'その他',     items: ['総合相談センター', '看護部', '感染管理室', AFF_OTHER] }
+  ],
+  doctor: [
+    { label: '内科系の診療科', items: ['腎臓内科', '内分泌・代謝内科', '血液内科', '脳神経内科', '呼吸器内科', '消化器内科',
+                                      '循環器内科', '緩和ケア内科', '小児科', '精神科', '救急科'] },
+    { label: '外科系の診療科', items: ['外科・消化器外科', '整形外科', '脳神経外科', '呼吸器外科', '心臓血管外科', '皮膚科',
+                                      '形成外科', '泌尿器科', '産婦人科', '眼科', '耳鼻咽喉科・頭頸部外科', '口腔外科'] },
+    { label: '専門診療科・その他', items: ['リハビリテーション科', '放射線治療科', '放射線診断科', '麻酔科', '病理診断科',
+                                          '臨床検査科', '輸血科', AFF_OTHER] }
+  ]
+};
+
+// 勉強会・教育の依頼文の1行目に出す区分名
+const EDU_TAG = { nurse: '勉強会・教育', doctor: '教育・その他' };
+
+// 依頼内容・希望する内容の「その他」は、その場で入力してもらう（依頼文には入力した文章を出す）
+const OTHER_OPT = 'その他（入力する）';
+function otherOpt(o) { return o.startsWith('その他') ? OTHER_OPT : o; }
+// 勉強会の講義はテーマを入力してもらう
+const THEME_OPT = '部署の勉強会に来て講義してほしい';
+// 勉強会・教育の参加予定人数・希望時期（任意）
+const MEMBERS = ['5名以下', '6〜10名', '11〜20名', '21名以上', '未定'];
+const TIMING  = ['今月中', '来月', '2〜3か月以内', '時期は相談したい'];
+// 勉強会・教育の対象部署：看護師は所属と同じ一覧、医師は診療科に病棟・重症・外来を加える
+function deptGroups(role) { return role === 'nurse' ? affiliationOptions.nurse : affiliationOptions.doctor.concat(wardGroups); }
 
 const educationOptions = {
   doctor: [
@@ -573,7 +643,7 @@ const educationOptions = {
   nurse: [
     '症例について多職種でカンファレンスをしたい',
     '担当患者の臨床判断について一緒に整理したい',
-    '部署の勉強会に来て講義してほしい（テーマは自由記載に記載）',
+    '部署の勉強会に来て講義してほしい',
     '患者対応について個別に相談したい',
     '新人・研修生のOJTに同行・指導してほしい',
     'ラダー研修の内容について相談したい',
@@ -619,8 +689,10 @@ const STORE_KEY = 'tokutei-irai-requester';
 
 const st = {
   screen: 'top', role: '', entry: null, group: '', action: '',
-  urgency: '', callback: '', support: '', eduType: '', ward: ''
+  urgency: '', callback: '', support: '', eduType: '', ward: '', wardCat: '',
+  affRole: '', affCat: '', aff: '', deptRole: '', deptCat: '', dept: '', members: '', timing: ''
 };
+let savedRequester = null;   // 端末に記憶した依頼者（所属は同じ職種のときだけ使う）
 const order = ['top', 'select', 'input', 'confirm', 'done'];
 
 /* ---------- ユーティリティ ---------- */
@@ -819,7 +891,8 @@ function renderActions() {
 
 /* ---------- 入力 ---------- */
 
-function chipBox(id, arr, key, cls) {
+// optional：任意の項目（もう一度押すと選択を外せる）
+function chipBox(id, arr, key, cls, optional) {
   const box = qs('#' + id);
   box.innerHTML = '';
   arr.forEach(v => {
@@ -836,13 +909,31 @@ function chipBox(id, arr, key, cls) {
     if (key === 'urgency' && v === '緊急') b.classList.add('urgent');
     b.onclick = () => {
       setMsg('');
-      st[key] = v;
-      selectOne(box, b);
+      if (optional && st[key] === v) {
+        st[key] = '';
+        b.classList.remove('sel');
+      } else {
+        st[key] = v;
+        selectOne(box, b);
+      }
       if (key === 'urgency' && v === '緊急') showUrgent();
+      syncOtherFields();
     };
     box.appendChild(b);
   });
 }
+
+// 「その他」・講義のテーマの入力欄は、その選択肢を選んだときだけ出す
+function syncOtherFields() {
+  qs('#supportOtherField').classList.toggle('hide', st.support !== OTHER_OPT);
+  qs('#eduOtherField').classList.toggle('hide', st.eduType !== OTHER_OPT);
+  qs('#themeField').classList.toggle('hide', st.eduType !== THEME_OPT);
+}
+
+// 依頼文に出す値（「その他」は入力した文章）
+function supportValue() { return st.support === OTHER_OPT ? val('supportOther') : st.support; }
+function eduValue()     { return st.eduType === OTHER_OPT ? val('eduOther') : st.eduType; }
+function deptValue()    { return st.dept === AFF_OTHER ? val('deptOther') : st.dept; }
 
 function syncInput() {
   const edu = st.entry.type === 'edu';
@@ -851,19 +942,49 @@ function syncInput() {
   qs('#eduArea').classList.toggle('hide', !edu);
   qs('#patientArea').classList.toggle('hide', edu);
 
-  qs('#name').placeholder = doctor ? '例）山田 太郎／循環器内科' : '例）山田 花子／西６病棟';
-  qs('#pidLabel').innerHTML = '患者ID' + (doctor ? '<span class="opt">任意（カルテ番号が手元にない場合は空欄で可）</span>' : '<span class="req">必須</span>');
+  qs('#name').placeholder = doctor ? '例）山田 太郎' : '例）山田 花子';
+  // 職種が変わったら所属を選び直す（記憶した所属は同じ職種のときだけ入れる）
+  if (st.affRole !== st.role) {
+    st.affRole = st.role;
+    st.affCat = '';
+    st.aff = '';
+    qs('#affOther').value = '';
+    const s = savedRequester;
+    const cat = s && s.role === st.role && affiliationOptions[st.role].find(c => c.label === s.affCat);
+    if (cat && cat.items.includes(s.aff)) {
+      st.affCat = s.affCat;
+      st.aff = s.aff;
+      if (s.aff === AFF_OTHER) qs('#affOther').value = s.affOther || '';
+    }
+  }
+  renderAffCats();
+  renderWard();
+  // 勉強会・教育の対象部署も、職種が変わったら選び直す
+  if (st.deptRole !== st.role) {
+    st.deptRole = st.role;
+    st.deptCat = '';
+    st.dept = '';
+    qs('#deptOther').value = '';
+  }
+  renderDept();
+  qs('#pidLabel').innerHTML = '患者さんのID' + (doctor ? '<span class="opt">任意（カルテ番号が手元にない場合は空欄で可）</span>' : '<span class="req">必須</span>');
   qs('#statusLabel').innerHTML = '現在の状況・説明<span class="opt">任意</span>';
   qs('#status').placeholder = doctor ? '目的・指示内容など（任意）' : 'バイタル、経過、気になっている点など';
 
   st.support = '';
   st.eduType = '';
+  st.members = '';
+  st.timing = '';
+  ['supportOther', 'eduOther', 'theme'].forEach(id => { qs('#' + id).value = ''; });
   if (edu) {
-    chipBox('eduType', educationOptions[st.role], 'eduType', 'choice');
+    chipBox('eduType', educationOptions[st.role].map(otherOpt), 'eduType', 'choice');
+    chipBox('membersBox', MEMBERS, 'members', 'chip', true);
+    chipBox('timingBox', TIMING, 'timing', 'chip', true);
   } else {
-    const opts = (requestOptions[st.role] && requestOptions[st.role][st.action]) || ['その他（自由記載に記載）'];
-    chipBox('support', opts.map(o => o.replace('補足欄', '自由記載')), 'support', 'choice');
+    const opts = (requestOptions[st.role] && requestOptions[st.role][st.action]) || [OTHER_OPT];
+    chipBox('support', opts.map(otherOpt), 'support', 'choice');
   }
+  syncOtherFields();
 
   const checks = edu ? [] : isNonAct() ? checkItems[st.role].filter(t => !Array.isArray(t)) : checkItems[st.role];
   qs('#checkCard').classList.toggle('hide', checks.length === 0);
@@ -886,13 +1007,126 @@ function syncInput() {
   });
 }
 
+/* 所属：区分のボタン → その区分の部署・診療科のボタン */
+function renderAffCats() {
+  const box = qs('#affCat');
+  box.innerHTML = '';
+  affiliationOptions[st.role].forEach(c => {
+    const b = makeBtn('chip', c.label);
+    if (c.label === st.affCat) b.classList.add('sel');
+    b.onclick = () => {
+      setMsg('');
+      if (st.affCat !== c.label) { st.affCat = c.label; st.aff = ''; }
+      selectOne(box, b);
+      renderAffItems();
+    };
+    box.appendChild(b);
+  });
+  renderAffItems();
+}
+
+function renderAffItems() {
+  const box = qs('#affBox');
+  box.innerHTML = '';
+  const cat = affiliationOptions[st.role].find(c => c.label === st.affCat);
+  box.classList.toggle('hide', !cat);
+  if (cat) {
+    cat.items.forEach(v => {
+      const b = makeBtn('chip', v);
+      if (v === st.aff) b.classList.add('sel');
+      b.onclick = () => {
+        setMsg('');
+        st.aff = v;
+        selectOne(box, b);
+        syncAffOther();
+        renderWard();   // 「所属と同じ」ボタンを出し直す
+        renderDept();
+      };
+      box.appendChild(b);
+    });
+  }
+  syncAffOther();
+}
+
+/* 「所属と同じ」→ 区分 → 項目の2段階で選ぶ（病棟・部署と対象部署で使う）
+   p：要素idの頭（p+'Same' / p+'Cat' / p+'Box'）、cand：「所属と同じ」で入れる値（なければ出さない） */
+function renderTwoStep(p, groups, cand, catKey, key, redraw) {
+  const same = qs('#' + p + 'Same');
+  same.innerHTML = '';
+  same.classList.toggle('hide', !cand);
+  if (cand) {
+    const b = makeBtn('chip', '所属と同じ：' + cand);
+    if (st[key] === cand) b.classList.add('sel');
+    b.onclick = () => {
+      setMsg('');
+      st[key] = cand;
+      st[catKey] = groups.find(g => g.items.includes(cand)).label;
+      redraw();
+    };
+    same.appendChild(b);
+  }
+
+  const cbox = qs('#' + p + 'Cat');
+  cbox.innerHTML = '';
+  groups.forEach(g => {
+    const b = makeBtn('chip', g.label);
+    if (g.label === st[catKey]) b.classList.add('sel');
+    b.onclick = () => {
+      setMsg('');
+      if (st[catKey] !== g.label) { st[catKey] = g.label; if (!g.items.includes(st[key])) st[key] = ''; }
+      redraw();
+    };
+    cbox.appendChild(b);
+  });
+
+  const box = qs('#' + p + 'Box');
+  box.innerHTML = '';
+  const grp = groups.find(g => g.label === st[catKey]);
+  box.classList.toggle('hide', !grp);
+  if (grp) {
+    grp.items.forEach(v => {
+      const b = makeBtn('chip', v);
+      if (v === st[key]) b.classList.add('sel');
+      b.onclick = () => { setMsg(''); st[key] = v; redraw(); };
+      box.appendChild(b);
+    });
+  }
+}
+
+// 患者さんの病棟・部署（「所属と同じ」は看護師で、所属が選択肢にあるとき）
+function renderWard() {
+  const cand = st.role === 'nurse' && wardOptions.includes(st.aff) ? st.aff : '';
+  renderTwoStep('ward', wardGroups, cand, 'wardCat', 'ward', renderWard);
+}
+
+// 勉強会・教育の対象部署（「所属と同じ」は所属が選択肢にあるとき。「その他」は入力欄を出す）
+function renderDept() {
+  const groups = deptGroups(st.role);
+  const cand = st.aff && st.aff !== AFF_OTHER && groups.some(g => g.items.includes(st.aff)) ? st.aff : '';
+  renderTwoStep('dept', groups, cand, 'deptCat', 'dept', renderDept);
+  qs('#deptOtherField').classList.toggle('hide', st.dept !== AFF_OTHER);
+}
+
+function syncAffOther() {
+  qs('#affOtherField').classList.toggle('hide', st.aff !== AFF_OTHER);
+}
+
+// 依頼文に出す所属（「その他」は入力した文字）
+function affValue() {
+  return st.aff === AFF_OTHER ? val('affOther') : st.aff;
+}
+
 function loadRequester() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (s) {
-      qs('#name').value = s.name || '';
+      let name = s.name || '';
+      // v11までは「氏名／所属」を1欄に記憶していたため、所属の部分を外す
+      if (!s.role) name = name.split(/[／\/]/)[0].trim();
+      qs('#name').value = name;
       qs('#contact').value = s.contact || '';
       qs('#remember').checked = true;
+      savedRequester = s;
     }
   } catch (e) { /* 保存できない環境では何もしない */ }
 }
@@ -900,8 +1134,11 @@ function loadRequester() {
 function saveRequester() {
   try {
     if (qs('#remember').checked) {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ name: val('name'), contact: val('contact') }));
+      savedRequester = { name: val('name'), contact: val('contact'),
+                         role: st.role, affCat: st.affCat, aff: st.aff, affOther: val('affOther') };
+      localStorage.setItem(STORE_KEY, JSON.stringify(savedRequester));
     } else {
+      savedRequester = null;
       localStorage.removeItem(STORE_KEY);
     }
   } catch (e) { /* 保存できない環境では何もしない */ }
@@ -911,16 +1148,20 @@ function saveRequester() {
 
 function okInput() {
   const lack = [];
-  if (!val('name'))    lack.push('氏名・所属');
+  if (!val('name'))    lack.push('氏名');
+  if (!affValue())     lack.push('所属');
   if (!val('contact')) lack.push('連絡先');
   if (st.entry.type === 'edu') {
     if (!st.eduType)   lack.push('希望する内容');
-    if (!val('dept'))  lack.push('対象部署');
+    else if (st.eduType === OTHER_OPT && !val('eduOther')) lack.push('希望する内容（その他）');
+    if (st.eduType === THEME_OPT && !val('theme')) lack.push('勉強会のテーマ');
+    if (!deptValue())  lack.push('対象部署');
   } else {
-    if (st.role !== 'doctor' && !val('pid')) lack.push('患者ID');
-    if (!val('pname')) lack.push('患者氏名');
-    if (!st.ward)      lack.push('入院病棟');
+    if (st.role !== 'doctor' && !val('pid')) lack.push('患者さんのID');
+    if (!val('pname')) lack.push('患者さんの氏名');
+    if (!st.ward)      lack.push('患者さんの病棟・部署');
     if (!st.support)   lack.push('依頼内容');
+    else if (st.support === OTHER_OPT && !val('supportOther')) lack.push('依頼内容（その他）');
   }
   if (!st.urgency)  lack.push('緊急度');
   if (!st.callback) lack.push('折り返し電話');
@@ -940,52 +1181,57 @@ function okInput() {
 }
 
 /* ---------- 依頼文の作成 ----------
-   形式（Excelの一覧へ登録が読み取る規則）
-   ・「番号_入口名(依頼)」の行 → 依頼メニュー
-   ・項目名は1行に単独、値は次の行
-   ・「分類名の具体的な特定行為」の下に「・行為名」
-   ・依頼内容／緊急度／折り返し希望は「・」付き1行
-   ・最初の項目名より前の行（依頼者・連絡先）は原文にのみ残る
-   ・※で始まる行は読み飛ばされる
-   ・空行と、項目名の後ろの「：」は読み取りに影響しない（見やすさのために入れる）
+   受け取る側（当番・公式グループの実施者）がスマホで読みやすい形（v12から）
+   ・1行目：［緊急度］、2行目：行為名／患者の病棟（患者ID・氏名は出さない）
+     勉強会・教育は［勉強会・教育］（医師は［教育・その他］）、2行目：希望する内容／対象部署
+   ・見出しは【 】の1種類。見出しの次の行に内容。項目の間に空行を入れない
+     患者：【依頼者】【行為】【依頼内容】【対象患者】【現在の状況】【その他】
+     勉強会・教育：【依頼者】【依頼内容】【対象・時期】【その他】
+   ・依頼メニュー名は出さない。Excelの受付マクロ（v8）が職種と行為から「番号_メニュー名」を決める
+   ・短い項目（ID：／氏名：／病棟：など）は「項目名：値」の1行。受付マクロが受付一覧の列へ振り分ける
+   ・【現在の状況】【その他】は入力がなければ見出しごと出さない
+   ・勉強会・教育は受付一覧に登録しない（受付マクロが対象外と表示する）
 */
+// 自由記載は空行を除いて行ごとに出す（見出しの区切りと紛れないように）
+function textLines(s) {
+  return s.split('\n').map(x => x.trimEnd()).filter(x => x.trim());
+}
+
 function buildRequestText() {
   const L = [];
-  const block = (label, value, bullet) => {
-    L.push('');
-    L.push(label + '：');
-    if (value) L.push(bullet ? '・' + value : value);
-  };
+  const edu = st.entry.type === 'edu';
 
-  L.push('【特定行為依頼窓口への依頼】');
-  L.push('依頼者：' + data[st.role].label + '／' + val('name'));
+  if (edu) { L.push('［' + EDU_TAG[st.role] + '］'); L.push(eduValue() + '／' + deptValue()); }
+  else     { L.push('［' + st.urgency + '］');      L.push(st.action + '／' + st.ward); }
+
+  L.push('【依頼者】');
+  L.push(data[st.role].label + '：' + val('name'));
+  L.push('所属：' + affValue());
   L.push('連絡先：' + val('contact'));
+  L.push('折り返し：' + st.callback);
 
-  if (st.entry.type === 'edu') {
-    L.push('※勉強会・教育の相談（受付一覧の登録対象外）');
-    L.push('※依頼メニュー：' + st.entry.label);
-    L.push('※希望する内容：' + st.eduType);
-    L.push('※対象部署：' + val('dept'));
-    if (val('members')) L.push('※対象者・参加予定人数：' + val('members'));
-    if (val('timing'))  L.push('※希望時期：' + val('timing'));
-    L.push('※緊急度：' + st.urgency);
-    L.push('※折り返し希望：' + st.callback);
-    if (val('note')) L.push('※その他・自由記載：' + val('note').replace(/\n/g, ' '));
-    return L.join('\n');
+  if (edu) {
+    L.push('【依頼内容】');
+    L.push(eduValue());
+    if (st.eduType === THEME_OPT) L.push('テーマ：' + val('theme'));
+    L.push('【対象・時期】');
+    L.push('対象部署：' + deptValue());
+    if (st.members) L.push('参加予定人数：' + st.members);
+    if (st.timing)  L.push('希望時期：' + st.timing);
+    L.push('緊急度：' + st.urgency);
+  } else {
+    L.push('【行為】');
+    L.push(st.action);
+    L.push('【依頼内容】');
+    L.push(supportValue());
+    L.push('【対象患者】');
+    L.push('ID：' + (val('pid') || '未記載'));
+    L.push('氏名：' + val('pname'));
+    L.push('病棟・部署：' + st.ward);
+    if (val('status')) { L.push('【現在の状況】'); L.push(...textLines(val('status'))); }
   }
-
-  L.push('');
-  L.push(st.entry.no + '_' + st.entry.label + '(依頼)');
-  block(st.group + 'の具体的な特定行為', st.action, true);
-  block('依頼内容', st.support, true);
-  block('対象患者ID', val('pid') || '未記載');
-  block('対象患者氏名', val('pname'));
-  block('対象患者入院病棟', st.ward);
-  block('対象患者の現在の状況・説明', val('status'));
-  block('緊急度', st.urgency, true);
-  block('折り返し希望', st.callback, true);
-  block('その他・自由記載', val('note'));
-  while (L.length && L[L.length - 1] === '') L.pop();
+  if (val('note')) { L.push('【その他】'); L.push(...textLines(val('note'))); }
+  if (edu) L.push('※受付一覧の登録対象外');
   return L.join('\n');
 }
 
@@ -1003,14 +1249,15 @@ function addSummaryItem(label, value) {
 
 function buildSummary() {
   qs('#summary').innerHTML = '';
-  addSummaryItem('依頼者', data[st.role].label + '／' + val('name') + '（' + val('contact') + '）');
+  addSummaryItem('依頼者', data[st.role].label + '／' + val('name') + '／' + affValue() + '（' + val('contact') + '）');
   addSummaryItem('依頼メニュー', st.entry.label + (st.action ? '｜' + st.action : ''));
   if (st.entry.type === 'edu') {
-    addSummaryItem('希望する内容', st.eduType);
-    addSummaryItem('対象部署', val('dept'));
+    addSummaryItem('希望する内容', eduValue() + (st.eduType === THEME_OPT ? '（テーマ：' + val('theme') + '）' : ''));
+    addSummaryItem('対象部署', deptValue());
+    if (st.members || st.timing) addSummaryItem('参加予定人数／希望時期', (st.members || '－') + '／' + (st.timing || '－'));
   } else {
-    addSummaryItem('依頼内容', st.support);
-    addSummaryItem('対象患者', [val('pid') || 'ID未記載', val('pname'), st.ward].join('／'));
+    addSummaryItem('依頼内容', supportValue());
+    addSummaryItem('対象の患者さん', [val('pid') || 'ID未記載', val('pname'), st.ward].join('／'));
     if (val('status')) addSummaryItem('現在の状況・説明', val('status'));
   }
   addSummaryItem('緊急度／折り返し', st.urgency + '／' + st.callback);
@@ -1114,7 +1361,8 @@ function doneItems(target) {
 /* ---------- リセット ---------- */
 
 function reset() {
-  Object.assign(st, { role: '', entry: null, group: '', action: '', urgency: '', callback: '', support: '', eduType: '', ward: '' });
+  Object.assign(st, { role: '', entry: null, group: '', action: '', urgency: '', callback: '', support: '', eduType: '', ward: '',
+                      wardCat: '', affRole: '', affCat: '', aff: '', deptRole: '', deptCat: '', dept: '', members: '', timing: '' });
   qsa('.btn.sel').forEach(x => x.classList.remove('sel'));
   qsa('input:not([type=checkbox]), textarea').forEach(x => x.value = '');
   qsa('.precheck, .prechoice').forEach(x => x.checked = false);
@@ -1206,7 +1454,8 @@ if (navigator.share && isMobile) {
 function moveNext(e) {
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
   // 文字の入力欄と、選択ボタンの群れ（病棟・依頼内容など）を画面の順に並べる
-  const groups = '#wardBox, #support, #eduType, #urgency, #callback';
+  const groups = '#affCat, #affBox, #wardSame, #wardCat, #wardBox, #support, #eduType, #deptSame, #deptCat, #deptBox, '
+    + '#membersBox, #timingBox, #urgency, #callback';
   const list = qsa('.screen.on input:not([type=checkbox]):not([type=radio]), .screen.on textarea, '
     + groups.split(', ').map(g => '.screen.on ' + g).join(', ')).filter(x => x.offsetParent !== null);
   const i = list.indexOf(e.target);
@@ -1231,7 +1480,6 @@ qsa('.screen input:not([type=checkbox])').forEach(x => {
 
 chipBox('urgency',  ['緊急', '本日中', '至急ではない'], 'urgency', 'chip');
 chipBox('callback', ['要', '不要（メッセージで十分）'], 'callback', 'chip');
-chipBox('wardBox',  wardOptions, 'ward', 'chip');
 loadRequester();
 show('top');
 </script>
