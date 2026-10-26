@@ -23,7 +23,9 @@ cases.forEach((c, i) => { if (res[i] !== c.text) fails.push(`一致せず #${c.n
 
 // 画面操作：ボタン・入力欄を実際に押して確認画面まで進める
 const FLOW = `(async () => {
-  const btn = text => { const b = [...qsa('#answer .choice')].find(x => x.textContent === text || x.textContent.startsWith(text)); if (!b) throw new Error('ボタンなし: ' + text + ' / ' + [...qsa('#answer .choice')].map(x => x.textContent).join('|')); b.click(); };
+  const find = text => [...qsa('#answer .choice')].find(x => x.textContent === text || x.textContent.startsWith(text));
+  // v9以降：はじめの確認（緊急でないこと）が出ていれば「緊急ではない」を押してから探す
+  const btn = text => { let b = find(text); if (!b && find('緊急ではない')) { find('緊急ではない').click(); b = find(text); } if (!b) throw new Error('ボタンなし: ' + text + ' / ' + [...qsa('#answer .choice')].map(x => x.textContent).join('|')); b.click(); };
   const type = v => { qs('#reply').value = v; qs('#answer .sendq').click(); };
   const skip = () => { const b = qs('#answer .skip .choice'); b.click(); };
   const run = (role, affSteps, useSame) => {
