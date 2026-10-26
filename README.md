@@ -3,7 +3,7 @@
 院内の看護師・医師が、特定看護師への相談・依頼文を作り、LINE WORKSの「特定行為依頼窓口」へ送るための単一HTMLです。
 
 - 配布用URL：https://t07ebina-maker.github.io/LINE_WORKS_nursing-request-portal/
-- 最新版：`index.html`（`index_v12.html` と同じ内容）
+- 最新版：`index.html`（`index_v17.html` と同じ内容）。最初に「緊急の依頼ではありませんか？」と緊急時の連絡先を出し、「次へ進む」で職種へ進む。緊急度は「本日中／至急ではない」の2つ
 - 詳しい経緯・仕様・残課題は、作成者のOneDriveにある引き継ぎ書（院内の運用を含むため、このリポジトリには置かない）
 
 ## ファイル
@@ -11,11 +11,9 @@
 | ファイル | 内容 |
 |---|---|
 | `index.html` | 配布用（最新版） |
-| `index_v12.html` | 最新版の控え（見比べ用） |
-| `index_v17.html` | 試作：最初に「緊急の依頼ではありませんか？」と緊急時の連絡先を出し、「緊急ではない」を押して職種へ進む版。緊急度は「本日中／至急ではない」の2つ。進むボタンは右端に矢印の丸を付けた形（依頼文はv12と同じ。配布用には未反映） |
-| `chat_v12.html` | 試作：チャット版v8に同じ確認を入れた版。進むボタンは右端に矢印の丸を付けた形（配布用には未反映） |
-| `chat.html` | チャット版（試作v8）。質問に順に答える形。選択肢・依頼文の書式・案内はv12と同じ。v12を直したら同じように直す |
-| `archive/` | 旧版（v2〜v11、3ファイル版、3月のサンプル試行） |
+| `index_v17.html` | 最新版の控え（見比べ用） |
+| `chat.html` | チャット版v12。質問に順に答える形。選択肢・依頼文の書式・案内はv17と同じ。v17を直したら同じように直す |
+| `archive/` | 旧版（v2〜v16、チャット版の試作、3ファイル版、3月のサンプル試行） |
 | `tools/verify_v12/` | v12以降の検証（下記）。Windowsの Edge と Node だけで動く（追加インストール不要） |
 | `tools/verify_v2.js` | v11までの依頼文の形の検証（v12の依頼文には使えない） |
 
@@ -25,12 +23,12 @@
 
 ## 直すときの手順
 
-1. `index.html` を直接直さない。`index_v13.html` のように版を上げたファイルで直す。
+1. `index.html` を直接直さない。`index_v18.html` のように版を上げたファイルで直す。
 2. 検証する（下記）。どちらも `fail 0 pageerrors 0` なら合格。
 3. 確定したら `index.html` へ反映し、前の版を `archive/` へ移す（`git mv`）。
 
 ```
-node tools/verify_v12/test_v12.mjs index_v13.html out.json
+node tools/verify_v12/test_v12.mjs index_v18.html out.json
 node tools/verify_v12/test_chat.mjs chat.html out.json
 ```
 

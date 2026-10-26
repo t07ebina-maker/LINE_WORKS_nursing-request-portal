@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 チャット版 v8</title>
+  <title>特定行為依頼窓口 チャット版 v12</title>
   <style>
 /* ============================================================
-   特定行為実践相談・依頼窓口 チャット版 v8（単一HTML）
+   特定行為実践相談・依頼窓口 チャット版 v12（単一HTML）
    選択肢・依頼文の書式・受付時間・祝日は統合版v12と同じ
    ============================================================ */
 :root {
@@ -143,6 +143,19 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .choice:active { background: var(--main-soft); }
 .choice .soon { display: block; font-size: 11px; font-weight: 700; color: #9a6b00; }
 .choice.primary { background: var(--main); color: #fff; font-weight: 700; }
+/* 右端に矢印の丸を付けた「進む」ボタン（はじめの確認） */
+#answer .choice.gonext {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--main); color: #fff; border: 0; border-radius: 999px; padding: 10px 10px 10px 20px;
+  box-shadow: 0 4px 10px rgba(31, 111, 103, .35);
+}
+#answer .choice.gonext .go-text b    { display: block; font-size: 17px; }
+#answer .choice.gonext .go-text span { display: block; font-size: 12px; }
+#answer .choice.gonext i {
+  flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: #fff; color: var(--main); font-style: normal; font-size: 22px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .inputrow { display: flex; gap: 8px; align-items: flex-end; }
 .inputrow input, .inputrow textarea {
@@ -159,6 +172,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .skip { margin-top: 8px; }
 
 .msg {
+  white-space: pre-line;   /* 連絡先などの改行をそのまま出す */
   margin: 0 0 8px; padding: 8px 10px; border-radius: 10px;
   background: var(--note); border: 1px solid var(--note-line); color: #6a5310;
   font-size: 13px; line-height: 1.6;
@@ -512,6 +526,7 @@ function stateOf(h) {
 function isSingle(entry) { return entry.groups.every(g => g.actions.length === 1); }
 
 function nextKey(s) {
+  if (!s.gate)  return 'gate';   // はじめに、緊急でないことを確かめる
   if (!s.role)  return 'role';
   if (!s.entry) return 'entry';
   const edu = s.entry.type === 'edu';
@@ -560,6 +575,11 @@ function question(k, s) {
   const doctor = s.role === 'doctor';
   const mem = stored();
   switch (k) {
+    case 'gate':
+      // 緊急のときの連絡先は最初から出しておく（押さなくても分かるように）
+      return { text: '緊急の依頼ではありませんか？\nこの窓口は、緊急でない相談・依頼のためのものです。', type: 'choice', long: true,
+               options: [['ok', '緊急ではない（次へ進む）']],
+               after: { cls: 'warn', text: '緊急の場合は、この窓口は使わず直接連絡してください。\n看護師：主治医・担当医・ドクターハリー・RRT等へ直接連絡\n医師：電話等で直接連絡' } };
     case 'role':
       return { text: '職種を選んでください。', type: 'choice', long: true,
                options: [['nurse', '看護師'], ['doctor', '医師']] };
@@ -791,8 +811,14 @@ function renderAnswer(k, q) {
     q.options.forEach(([value, label]) => {
       const b = document.createElement('button');
       b.type = 'button';
+      // 「前回と同じ」と、はじめの確認の「緊急ではない」は塗ったボタンにして押す場所をはっきりさせる
       b.className = 'choice' + (q.type !== 'choice' ? ' primary' : '');
       b.textContent = q.type !== 'choice' ? '前回と同じ：' + label : label;
+      if (k === 'gate') {
+        // はじめの確認は、右端に矢印の丸を付けた「進む」ボタン（B案）
+        b.className = 'choice gonext';
+        b.innerHTML = '<span class="go-text"><b>次へ進む</b><span>緊急ではない依頼を入力する</span></span><i aria-hidden="true">➜</i>';
+      }
       const fut = k === 'action' ? futureOf(value) : null;
       if (fut) {
         const t = document.createElement('span');

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v12</title>
+  <title>特定行為依頼窓口 v17</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -231,6 +231,22 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 .sheet .share-cancel { width: 100%; border: 0; border-radius: 14px; padding: 12px; font: inherit; cursor: pointer; margin-top: 8px; }
 .warn { background: #fff5f5; border-color: #f0c9c9; }
 .warn h3 { color: var(--urgent); }
+/* はじめの確認の進むボタン：説明の枠と見分けがつくよう、主色で塗ったボタンにする */
+/* 右端に矢印の丸を付けた「進む」ボタン（B案） */
+.gate-ok {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font: inherit; color: #fff; text-align: left; cursor: pointer;
+  background: var(--main); border: 0; border-radius: 999px; padding: 12px 12px 12px 22px;
+  box-shadow: 0 4px 10px rgba(31, 111, 103, .35);
+}
+.gate-ok .go-text b    { display: block; font-size: 18px; }
+.gate-ok .go-text span { display: block; font-size: 13px; }
+.gate-ok i {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: #fff; color: var(--main); font-style: normal; font-size: 24px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.gate-ok:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(31, 111, 103, .35); }
   </style>
 </head>
 <body>
@@ -257,6 +273,25 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
     <div class="body">
 
       <!-- 職種 -->
+      <!-- はじめの確認：緊急の依頼はこの窓口では受けない -->
+      <section class="screen" data-screen="gate">
+        <div class="card">
+          <h3>緊急の依頼ではありませんか？</h3>
+          <p>この窓口は、緊急でない相談・依頼のためのものです。</p>
+        </div>
+        <!-- 緊急のときの連絡先は最初から出しておく（押さなくても分かるように） -->
+        <div class="card warn">
+          <h3>緊急の場合は、この窓口は使わず直接連絡してください</h3>
+          <ul class="done-list">
+            <li>看護師：主治医・担当医・ドクターハリー・RRT等へ直接連絡</li>
+            <li>医師：電話等で直接連絡</li>
+          </ul>
+        </div>
+        <div class="grid">
+          <button class="gate-ok" id="gateOk"><span class="go-text"><b>次へ進む</b><span>緊急ではない依頼を入力する</span></span><i aria-hidden="true">➜</i></button>
+        </div>
+      </section>
+
       <section class="screen" data-screen="top">
         <div class="notice hide" id="topNotice"></div>
         <div class="grid">
@@ -372,7 +407,7 @@ details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; co
 
         <div class="card">
           <h3>緊急度<span class="req">必須</span></h3>
-          <div class="row" id="urgency"></div>
+          <div class="row2" id="urgency"></div>
           <h3 style="margin-top:14px">折り返し電話<span class="req">必須</span></h3>
           <div class="row2" id="callback"></div>
           <div class="field">
@@ -745,6 +780,7 @@ function show(name) {
   if (name === 'top') renderTimeNotice(receptionNotice(new Date()), 'topNotice');
 
   const titles = {
+    gate:    ['はじめに確認してください', ''],
     top:     ['職種を選んでください', '選ぶと次の画面へ進みます。'],
     select:  ['依頼する内容を選んでください', ''],
     input:   ['必要事項を入力してください', '必須の項目を入力すると送信画面へ進めます。'],
@@ -755,8 +791,8 @@ function show(name) {
   qs('#sub').textContent   = titles[name][1];
   qs('#sub').classList.toggle('hide', !titles[name][1]);
 
-  qs('#back').style.visibility = name === 'top' ? 'hidden' : 'visible';
-  qs('#next').classList.toggle('hide', name === 'top' || name === 'select');
+  qs('#back').style.visibility = name === 'gate' ? 'hidden' : 'visible';
+  qs('#next').classList.toggle('hide', name === 'gate' || name === 'top' || name === 'select');
   qs('#next').textContent = name === 'done' ? '新しい依頼を作成' : name === 'confirm' ? 'LINE WORKSで送信した' : '確認へ進む';
   window.scrollTo(0, 0);
 }
@@ -1368,7 +1404,7 @@ function reset() {
   qsa('.precheck, .prechoice').forEach(x => x.checked = false);
   qs('#remember').checked = false;
   loadRequester();
-  show('top');
+  show('gate');
 }
 
 function proceedToInput() {
@@ -1390,6 +1426,7 @@ qsa('.role').forEach(b => {
 });
 
 qs('#back').onclick = () => {
+  if (st.screen === 'top') { show('gate'); return; }
   if (st.screen === 'select' && !qs('#actionBox').classList.contains('hide')) { renderEntries(); return; }
   if (st.screen === 'input') {
     show('select');
@@ -1432,6 +1469,7 @@ qsa('.step').forEach(x => {
   x.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goStep(x.dataset.s); } };
 });
 
+qs('#gateOk').onclick = () => show('top');
 qs('#help').onclick = () => toggle('helpModal', true);
 qsa('[data-close]').forEach(b => b.onclick = () => toggle(b.dataset.close, false));
 qs('#copyBtn').onclick = copyText;
@@ -1478,10 +1516,11 @@ qsa('.screen input:not([type=checkbox])').forEach(x => {
   x.addEventListener('keydown', moveNext);
 });
 
-chipBox('urgency',  ['緊急', '本日中', '至急ではない'], 'urgency', 'chip');
+// 緊急は最初の確認で受けないため、緊急度は2つから選ぶ（v15）
+chipBox('urgency',  ['本日中', '至急ではない'], 'urgency', 'chip');
 chipBox('callback', ['要', '不要（メッセージで十分）'], 'callback', 'chip');
 loadRequester();
-show('top');
+show('gate');
 </script>
 </body>
 </html>
