@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>特定行為依頼窓口 チャット版 v10</title>
+  <style>
+/* ============================================================
+   特定行為実践相談・依頼窓口 チャット版 v10（単一HTML）
+   選択肢・依頼文の書式・受付時間・祝日は統合版v12と同じ
+   ============================================================ */
+:root {
+  --bg: #f4f7f6;
+  --card: #ffffff;
+  --line: #dbe5e1;
+  --text: #1f2d2a;
+  --sub: #4a5f58;
+  --main: #2a8c82;        /* 主色：落ち着いた青緑（v9と同じ） */
+  --main-soft: #e6f3f1;
+  --main-deep: #1f6f67;
+  --urgent: #c62828;
+  --urgent-soft: #fdecec;
+  --note: #fff7e0;
+  --note-line: #f0d995;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  -webkit-text-size-adjust: 100%;
+}
+
+.app { max-width: 460px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+
+/* ---------- ヘッダー ---------- */
+.hero {
+  flex: none;
+  background: linear-gradient(135deg, #3a9e93, #6bb8ae);
+  color: #fff;
+  padding: 12px 16px;
+}
+.hero h1 { margin: 0; font-size: 18px; }
+.hero p  { margin: 2px 0 0; font-size: 12px; opacity: .95; }
+
+/* ---------- トーク ---------- */
+.log { position: relative; flex: 1; overflow-y: auto; padding: 14px 12px 8px; display: flex; flex-direction: column; gap: 10px; }
+
+.bot  { display: flex; gap: 8px; align-items: flex-start; max-width: 92%; }
+.icon {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--main); color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.bubble {
+  background: var(--card); border: 1px solid var(--line); border-radius: 4px 16px 16px 16px;
+  padding: 9px 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+}
+.bubble.notice { background: var(--note); border-color: var(--note-line); color: #6a5310; font-size: 13px; }
+.bubble.info   { background: var(--main-soft); border-color: #bfdcd7; color: #24534d; font-size: 13px; }
+.bubble.warn   { background: var(--urgent-soft); border-color: #f0c9c9; color: var(--urgent); font-size: 13px; }
+
+.me { align-self: flex-end; max-width: 85%; }
+.me .bubble {
+  background: var(--main); border-color: var(--main); color: #fff;
+  border-radius: 16px 4px 16px 16px;
+}
+
+/* 確認・送信のカード（ボットの吹き出しとして表示） */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; width: 100%; }
+.card h3 { margin: 0 0 8px; font-size: 15px; }
+.summary { display: grid; gap: 6px; }
+/* 確認内容は「項目名｜内容」の横並びにして縦を詰める */
+.summary { gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.item { display: grid; grid-template-columns: 6.5em 1fr; gap: 8px; background: #fff; border-top: 1px solid var(--line); padding: 7px 10px; font-size: 14px; line-height: 1.5; }
+.item:first-child { border-top: 0; }
+.item b { font-size: 12px; color: var(--sub); padding-top: 2px; }
+.item div { white-space: pre-wrap; word-break: break-all; }
+.howto-sub { font-size: 14px; font-weight: 700; color: var(--main-deep); margin: 12px 0 6px; }
+.howto-sub:first-of-type { margin-top: 0; }
+.flow { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #3d514b; }
+.flow.ok { color: var(--main); font-weight: 700; }
+.note { font-size: 12px; color: #6b7f78; margin: 10px 0 0; line-height: 1.7; }
+.nb { white-space: nowrap; }
+.sendbox { display: grid; gap: 8px; }
+.sendbox .subrow { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.sendbox .choice { border-radius: 12px; text-align: center; padding: 8px 6px; font-size: 13px; }
+.bot.wide { max-width: 100%; }
+.bot.wide .bubble { flex: 1; min-width: 0; }
+.send-btn, .copy-btn {
+  width: 100%; font: inherit; font-size: 16px; font-weight: 700;
+  border: 0; border-radius: 14px; padding: 14px; cursor: pointer;
+}
+.send-btn { background: var(--main); color: #fff; }
+.copy-btn { background: #e3ece9; color: var(--text); }
+.done-list { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+.done-list li { margin-bottom: 4px; }
+details.preview { margin-top: 10px; }
+details.preview summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--sub); }
+.preview-textarea {
+  width: 100%; min-height: 240px; margin-top: 8px;
+  border: 1px solid #c9d7d1; border-radius: 10px; padding: 10px;
+  font: inherit; font-size: 14px; line-height: 1.6; background: #fbfdfc; resize: vertical;
+}
+
+/* ---------- 回答欄（画面下） ---------- */
+/* トークの上に乗った板に見えるよう、白地・上に主色の線と影 */
+.composer {
+  flex: none;
+  position: relative;
+  border-top: 3px solid var(--main);
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  box-shadow: 0 -6px 16px rgba(31, 45, 42, .14);
+  padding: 12px 12px calc(10px + env(safe-area-inset-bottom));
+  max-height: 55%;
+  overflow-y: auto;
+}
+
+/* ---------- 受付状況の帯 ---------- */
+.status { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid; }
+.status .mark { font-size: 18px; line-height: 1; }
+.status b { display: block; font-size: 15px; }
+.status .sub { display: block; font-size: 12px; line-height: 1.5; }
+.status.open   { background: #e3f4ef; border-color: #a9d6cc; color: var(--main-deep); }
+.status.open .mark { color: var(--main); }
+.status.closed { background: #fde9c4; border-color: #e9b660; color: #6b4400; }
+.status.closed .mark { color: #c27a00; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choices.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); }
+.choice {
+  font: inherit; font-size: 14px; line-height: 1.4; text-align: left;
+  border: 1px solid var(--main); background: #fff; color: var(--main-deep);
+  border-radius: 999px; padding: 9px 14px; cursor: pointer;
+}
+.choices.grid4 .choice { text-align: center; padding: 9px 4px; }
+.choices.long .choice { border-radius: 14px; width: 100%; }
+.choice:active { background: var(--main-soft); }
+.choice .soon { display: block; font-size: 11px; font-weight: 700; color: #9a6b00; }
+.choice.primary { background: var(--main); color: #fff; font-weight: 700; }
+
+.inputrow { display: flex; gap: 8px; align-items: flex-end; }
+.inputrow input, .inputrow textarea {
+  flex: 1; min-width: 0;
+  border: 1px solid #c9d7d1; border-radius: 12px; padding: 10px 12px;
+  font: inherit; font-size: 16px;   /* iPhoneでの自動拡大を防ぐ */
+  background: #fff; color: var(--text);
+}
+.inputrow textarea { min-height: 72px; resize: vertical; }
+.sendq {
+  flex: none; font: inherit; font-weight: 700; border: 0; border-radius: 12px;
+  padding: 11px 14px; background: var(--main); color: #fff; cursor: pointer;
+}
+.skip { margin-top: 8px; }
+
+.msg {
+  white-space: pre-line;   /* 連絡先などの改行をそのまま出す */
+  margin: 0 0 8px; padding: 8px 10px; border-radius: 10px;
+  background: var(--note); border: 1px solid var(--note-line); color: #6a5310;
+  font-size: 13px; line-height: 1.6;
+}
+.nav { display: flex; gap: 8px; margin-top: 10px; }
+.nav button {
+  flex: 1; font: inherit; font-size: 13px; border: 0; border-radius: 12px;
+  padding: 9px 6px; background: #e3ece9; color: var(--text); cursor: pointer;
+}
+.nav button:disabled { opacity: .4; cursor: default; }
+.hide { display: none !important; }
+
+/* 回答欄の上に出す質問文 */
+.qhead { font-size: 14px; font-weight: 700; color: var(--main-deep); line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; }
+.qwarn { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--urgent); }
+
+/* 新しく出た吹き出し・回答欄だけ、0.3秒でふわっと出す */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.new { animation: rise .3s ease both; }
+@media (prefers-reduced-motion: reduce) { .new { animation: none; } }
+
+/* ---------- モーダル（v9と同じ） ---------- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.modal.on { display: flex; }
+.sheet { width: min(100%, 400px); background: #fff; border-radius: 18px; padding: 18px; border: 1px solid var(--line); }
+.sheet h3 { margin: 0 0 10px; }
+.sheet p, .sheet li { font-size: 14px; line-height: 1.7; color: #3d514b; }
+.sheet ul { padding-left: 18px; }
+.sheet .next, .sheet .back { width: 100%; border: 0; border-radius: 14px; padding: 14px; font: inherit; cursor: pointer; }
+.sheet .next { background: #2f3e3a; color: #fff; font-weight: 700; }
+.sheet .back { background: #e3ece9; color: var(--text); margin-top: 8px; padding: 12px; }
+.sheet .share-to { display: block; padding-left: 1em; }
+.sheet .share-note { display: block; margin-top: 6px; font-size: 15px; font-weight: 700; color: #b42318; }
+.warn-sheet { background: #fff5f5; border-color: #f0c9c9; }
+.warn-sheet h3 { color: var(--urgent); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <h1>特定行為依頼窓口</h1>
+    <p>質問に答えると、LINE WORKSの「特定行為依頼窓口」へ送る依頼文ができます。</p>
+  </div>
+
+  <div class="status" id="status" role="status"></div>
+
+  <div class="log" id="log" aria-live="polite"></div>
+
+  <div class="composer">
+    <div class="msg hide" id="msg" role="alert"></div>
+    <div id="answer"></div>
+    <div class="nav">
+      <button type="button" id="undo">1つ戻る</button>
+      <button type="button" id="restart">最初から</button>
+      <button type="button" id="help">使い方・受付時間</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="helpModal">
+  <div class="sheet">
+    <h3>使い方・受付時間</h3>
+    <ul>
+      <li>質問に答えていくと、最後に依頼文ができます。答えを直したいときは「1つ戻る」を押してください。</li>
+      <li>確認画面の「依頼窓口へ送る」を押し、LINE WORKSで「特定行為依頼窓口」を選んで送信します。ボタンが出ない場合は、依頼文をコピーして貼り付けてください。</li>
+      <li>LINE WORKSに「特定行為依頼窓口」のトークがない場合は、LINE WORKSで「特定行為依頼窓口」を検索して追加してください。</li>
+      <li>受付時間：平日10時～15時（祝日を除く）。時間外の依頼は、次の運用日の10時～11時に確認します。</li>
+      <li>受付時間内の依頼でも、当日の対応を確約するものではありません。</li>
+      <li>緊急時はこの窓口を使わず、電話等で直接連絡してください（看護師は主治医・担当医・ドクターハリー・RRT等へ）。</li>
+    </ul>
+    <button class="next" data-close="helpModal">閉じる</button>
+  </div>
+</div>
+
+<div class="modal" id="shareModal">
+  <div class="sheet warn-sheet">
+    <h3>送信先を確認してください</h3>
+    <p>次の画面で <b>LINE WORKS</b> を選び、<span class="share-to">宛先は <b>「特定行為依頼窓口」</b> <span style="white-space: nowrap">だけにしてください。</span></span></p>
+    <p>個人宛て・公式グループ・ほかのアプリには<span class="share-to">送らないでください。</span><span class="share-note">※患者情報が含まれます</span></p>
+    <button class="next" id="shareOk">確認して共有メニューを開く</button>
+    <button class="back" data-close="shareModal">やめる</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   データ定義（統合版v12と同じ。変えるときは統合版と両方を直す）
+   出力文面は「受付・集計・評価」Excelの一覧へ登録（M_Uketsuke）で
+   読み取れる形式にそろえる。
+   ============================================================ */
+
+const data = {
+  doctor: {
+    label: '医師',
+    entries: [
+      { no: 1, label: '具体的な特定行為を相談・依頼したい', type: 'patient', groups: [
+        { label: '呼吸の管理',     actions: ['気管チューブ位置調整','侵襲的陽圧換気設定変更','人工呼吸器離脱','気切チューブ交換'] },
+        { label: '循環・薬剤調整', actions: ['カテコラミン投与量調整','降圧剤投与量調整','鎮静薬投与量調整','抗精神病薬臨時投与',
+                                            '一時的ペースメーカ操作・管理','一時的ペースメーカリード抜去','IABP離脱補助頻度調整'] },
+        { label: '輸液管理',       actions: ['脱水症状への輸液補正','高カロリー輸液投与量調整'] },
+        { label: '電解質調整',     actions: ['Na・K・Cl投与量調整'] },
+        { label: '血管路管理',     actions: ['PICC挿入','ミッドライン挿入','CV抜去','直接動脈穿刺採血','橈骨動脈ライン確保'] },
+        { label: '創傷・創部管理', actions: ['壊死組織除去（デブリドマン）','陰圧閉鎖療法（NPWT）',
+                                            '心嚢ドレーン抜去','胸腔ドレーン抜去','腹腔ドレーン抜去','創部ドレーン抜去'] },
+        { label: '感染対応',       actions: ['感染徴候への薬剤臨時投与','感染対応の相談'] }
+      ]},
+      { no: 2, label: '患者・家族との意思決定を支援してほしい', type: 'patient', groups: [
+        { label: '意思決定支援',       actions: ['意思決定支援'] },
+        { label: '個別カンファレンス', actions: ['個別カンファレンス'] }
+      ]},
+      { no: 3, label: '教育・その他を相談したい', type: 'edu' }
+    ]
+  },
+  nurse: {
+    label: '看護師',
+    entries: [
+      { no: 1, label: '患者のことを相談・依頼したい', type: 'patient', groups: [
+        { label: '呼吸の管理',     actions: ['気管チューブ位置調整','侵襲的陽圧換気設定変更','人工呼吸器離脱','気切チューブ交換'] },
+        { label: '循環・薬剤調整', actions: ['鎮静薬投与量調整','一時的ペースメーカ操作・管理','一時的ペースメーカリード抜去',
+                                            'IABP離脱補助頻度調整','カテコラミン投与量調整','降圧剤投与量調整','抗精神病薬臨時投与'] },
+        { label: '輸液管理',       actions: ['脱水症状への輸液補正','高カロリー輸液投与量調整'] },
+        { label: '電解質調整',     actions: ['Na・K・Cl投与量調整'] },
+        { label: '血管路管理',     actions: ['CV抜去','PICC挿入','ミッドライン挿入','直接動脈穿刺採血','橈骨動脈ライン確保'] },
+        { label: '創傷・創部管理', actions: ['壊死組織除去（デブリドマン）','陰圧閉鎖療法（NPWT）','褥瘡・創傷ケア全般',
+                                            '心嚢ドレーン抜去','胸腔ドレーン抜去','腹腔ドレーン抜去','創部ドレーン抜去'] },
+        { label: '感染対応',       actions: ['感染徴候への薬剤臨時投与','感染対応の相談'] },
+        { label: '意思決定支援',   actions: ['意思決定支援'] },
+        { label: 'せん妄・BPSD',   actions: ['せん妄・BPSD'] }
+      ]},
+      { no: 2, label: '勉強会・教育を相談したい', type: 'edu' }
+    ]
+  }
+};
+
+const requestOptions = {
+  doctor: {
+    '気管チューブ位置調整':         ['チューブ位置を確認・調整してほしい','固定位置の変更を依頼したい','その他（補足欄に記載）'],
+    '侵襲的陽圧換気設定変更':       ['SpO2・換気が不安定で設定変更・実施を依頼したい','ウィーニングに向けた設定変更を依頼したい','その他（補足欄に記載）'],
+    '人工呼吸器離脱':               ['離脱の実施を依頼したい','離脱のタイミングを相談したい','その他（補足欄に記載）'],
+    '気切チューブ交換':             ['気切チューブの交換を依頼したい','交換のタイミングを相談したい','その他（補足欄に記載）'],
+    'カテコラミン投与量調整':       ['バイタルが不安定でカテコラミンの増減を依頼したい','増量・減量の判断を相談したい','その他（補足欄に記載）'],
+    '降圧剤投与量調整':             ['血圧が不安定で降圧剤の増減を依頼したい','目標血圧に達しておらず調整を依頼したい','その他（補足欄に記載）'],
+    '鎮静薬投与量調整':             ['鎮静が深すぎるため減量を依頼したい','鎮静が浅くアジテーションがあり増量を依頼したい','鎮静レベルの評価・調整を相談したい','その他（補足欄に記載）'],
+    '抗精神病薬臨時投与':           ['興奮・せん妄に対し抗精神病薬の投与を依頼したい','投与タイミング・量について相談したい','その他（補足欄に記載）'],
+    '一時的ペースメーカ操作・管理': ['ペースメーカ設定の変更・確認を依頼したい','管理方針について相談したい','その他（補足欄に記載）'],
+    '一時的ペースメーカリード抜去': ['リードが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    'IABP離脱補助頻度調整':         ['離脱に向けた補助頻度の変更を依頼したい','離脱のタイミングを相談したい','その他（補足欄に記載）'],
+    '脱水症状への輸液補正':         ['脱水傾向があり輸液の開始・変更を依頼したい','補正方針について相談したい','その他（補足欄に記載）'],
+    'Na・K・Cl投与量調整':          ['電解質補正が必要で投与量の調整を依頼したい','補正方針について相談したい','その他（補足欄に記載）'],
+    '高カロリー輸液投与量調整':     ['高カロリー輸液の投与量変更を依頼したい','継続・中止の判断を相談したい','その他（補足欄に記載）'],
+    'PICC挿入':                     ['長期輸液・抗菌薬投与のためPICC挿入を依頼したい','PICC適応について相談したい','その他（補足欄に記載）'],
+    'ミッドライン挿入':             ['ミッドライン挿入を依頼したい','ミッドライン適応について相談したい','その他（補足欄に記載）'],
+    'CV抜去':                       ['末梢確保ができたため抜去を依頼したい','退院・転棟前に抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    '直接動脈穿刺採血':             ['血液ガス・採血のため動脈穿刺採血を依頼したい','その他（補足欄に記載）'],
+    '橈骨動脈ライン確保':           ['動脈圧モニタリングのためライン確保を依頼したい','頻回の動脈採血が必要なためライン確保を依頼したい','その他（補足欄に記載）'],
+    '壊死組織除去（デブリドマン）': ['壊死組織がありデブリドマンの実施を依頼したい','デブリドマンの適応について相談したい','その他（補足欄に記載）'],
+    '陰圧閉鎖療法（NPWT）':         ['NPWT適応について評価・判断を依頼したい','NPWT交換の実施を依頼したい','次回交換の時期・方法を相談したい','その他（補足欄に記載）'],
+    '心嚢ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    '胸腔ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    '腹腔ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    '創部ドレーン抜去':             ['ドレーンが不要になったため抜去を依頼したい','抜去のタイミングを相談したい','その他（補足欄に記載）'],
+    '感染徴候への薬剤臨時投与':     ['感染徴候があり薬剤の臨時投与を依頼したい','抗菌薬の選択・調整を相談したい','その他（補足欄に記載）'],
+    '感染対応の相談':               ['感染徴候があり対応を相談したい','感染対策（隔離・予防策）について相談したい','その他（補足欄に記載）'],
+    '意思決定支援':                 ['治療の選択について、患者さん・家族の意思決定を支援してほしい','患者さん・家族・医療者の意見の調整を手伝ってほしい','意思決定支援の進め方を相談したい','その他（補足欄に記載）'],
+    '個別カンファレンス':           ['多職種カンファレンスを開いて進行してほしい','予定しているカンファレンスに参加してほしい','その他（補足欄に記載）']
+  },
+  nurse: {
+    '気管チューブ位置調整':         ['チューブがずれている可能性があり確認・調整を依頼したい','固定がゆるく入れ直しを依頼したい','その他（補足欄に記載）'],
+    '侵襲的陽圧換気設定変更':       ['SpO2・換気が不安定で設定変更が必要か相談したい','医師に報告する前に状態を相談したい','その他（補足欄に記載）'],
+    '鎮静薬投与量調整':             ['鎮静が深すぎる・浅すぎると感じ調整を依頼したい','医師に報告する前に鎮静レベルを相談したい','その他（補足欄に記載）'],
+    '人工呼吸器離脱':               ['離脱の実施を依頼したい','離脱後の観察・管理を相談したい','その他（補足欄に記載）'],
+    '一時的ペースメーカ操作・管理': ['ペースメーカの動作・波形に変化があり相談したい','設定の確認・変更を依頼したい','その他（補足欄に記載）'],
+    '一時的ペースメーカリード抜去': ['医師からリード抜去の話が出ており実施を依頼したい','抜去してよいか判断を相談したい','その他（補足欄に記載）'],
+    'IABP離脱補助頻度調整':         ['IABP管理中に状態変化があり相談したい','補助頻度の変更を依頼したい','その他（補足欄に記載）'],
+    '心嚢ドレーン抜去':             ['医師から抜去の話が出ており実施を依頼したい','排液の性状・量が変化しており評価・抜去の判断を相談したい','その他（補足欄に記載）'],
+    '胸腔ドレーン抜去':             ['医師から抜去の話が出ており実施を依頼したい','エアリーク・排液量の変化について相談したい','その他（補足欄に記載）'],
+    '腹腔ドレーン抜去':             ['医師から抜去の話が出ており実施を依頼したい','排液の性状・量が変化しており相談したい','その他（補足欄に記載）'],
+    '脱水症状への輸液補正':         ['飲水・食事量が低下しており輸液継続の判断を相談したい','脱水・浮腫の兆候がありアセスメントを相談したい','輸液速度・内容の変更を依頼したい','その他（補足欄に記載）'],
+    '高カロリー輸液投与量調整':     ['投与量の変更を依頼したい','輸液が終わりそうだが次の指示がなく相談したい','その他（補足欄に記載）'],
+    '感染徴候への薬剤臨時投与':     ['感染徴候があり医師への報告前に相談したい','薬剤投与の指示が出ているが投与方法を確認したい','薬剤の臨時投与を依頼したい','その他（補足欄に記載）'],
+    'カテコラミン投与量調整':       ['バイタルが不安定で医師への報告前にアセスメントを相談したい','カテコラミンの投与量調整を依頼したい','調整後の観察について相談したい','その他（補足欄に記載）'],
+    'Na・K・Cl投与量調整':          ['電解質に異常値があり補正の判断を相談したい','投与量の変更を依頼したい','補正後の観察について相談したい','その他（補足欄に記載）'],
+    '降圧剤投与量調整':             ['血圧が不安定で医師への報告前にアセスメントを相談したい','降圧剤の投与量調整を依頼したい','調整後の観察について相談したい','その他（補足欄に記載）'],
+    '抗精神病薬臨時投与':           ['興奮・せん妄があり医師への報告前に対応を相談したい','抗精神病薬の投与を依頼したい','その他（補足欄に記載）'],
+    '意思決定支援':                 ['治療の選択について、患者さん・家族の意思決定を支援してほしい','患者さん・家族・医療者の意見の調整を手伝ってほしい','意思決定支援の進め方を相談したい','その他（補足欄に記載）'],
+    'CV抜去':                       ['医師から抜去の話が出ており実施を依頼したい','刺入部に発赤・滲出液があり抜去の判断を相談したい','退院前に抜去の実施を依頼したい','その他（補足欄に記載）'],
+    'PICC挿入':                     ['末梢確保が困難でPICC挿入を相談したい','長期投与が必要でPICC適応について相談したい','その他（補足欄に記載）'],
+    '壊死組織除去（デブリドマン）': ['壊死組織があるため評価・処置を依頼したい','デブリドマンの実施を依頼したい','創部の変化があり一緒に確認してほしい','その他（補足欄に記載）'],
+    '陰圧閉鎖療法（NPWT）':         ['NPWT交換の実施を依頼したい（定期交換）','次回NPWT交換を依頼したい','キット・ドレッシングの交換方法を相談したい','その他（補足欄に記載）'],
+    '創部ドレーン抜去':             ['医師から抜去の話が出ており実施を依頼したい','抜去してよいか判断を相談したい','その他（補足欄に記載）'],
+    '直接動脈穿刺採血':             ['血液ガス採取のたびに医師を呼んでいるため採血を依頼したい','その他（補足欄に記載）'],
+    '橈骨動脈ライン確保':           ['頻回の動脈採血があるためライン確保を依頼したい','既存ラインの固定が不安定で入れ直しを依頼したい','その他（補足欄に記載）'],
+    '褥瘡・創傷ケア全般':           ['褥瘡の状態が変化しており評価・処置を相談したい','スキン-テアが発生しており処置・予防を相談したい','被覆材・外用薬の選択を相談したい','現在の処置が適切か評価してほしい','その他（補足欄に記載）'],
+    'せん妄・BPSD':                 ['せん妄が疑われ対応を相談したい','BPSDへの対応について相談したい','療養環境の調整を相談したい','その他（補足欄に記載）'],
+    '気切チューブ交換':             ['医師から交換の話が出ており実施を依頼したい','交換の時期・方法を相談したい','その他（補足欄に記載）'],
+    'ミッドライン挿入':             ['末梢確保が困難でミッドライン挿入を相談したい','ミッドライン適応について相談したい','その他（補足欄に記載）'],
+    '感染対応の相談':               ['感染徴候があり対応を相談したい','感染対策（隔離・予防策）について相談したい','その他（補足欄に記載）']
+  }
+};
+
+// 患者さんの病棟・部署（区分 → 病棟・部署）。数字は半角（Excel設定シートの部署名と同じ書き方）
+const wardGroups = [
+  { label: '病棟', items: ['西4', '西6', '西7', '西8', '西9', '東6', '東7', '東9', '東10'] },
+  { label: '重症', items: ['東5ICU', '東8HCU'] },
+  { label: '外来', items: ['外来1', '外来2', '救急外来', '化学療法室', '内視鏡放射線治療室', '血液浄化センター'] }
+];
+const wardOptions = wardGroups.flatMap(g => g.items);
+
+// 依頼者の所属（区分 → 部署・診療科）。診療科は病院公式サイトの表記
+const AFF_OTHER = 'その他';
+const affiliationOptions = {
+  nurse: [
+    { label: '病棟',       items: ['西4', '西6', '西7', '西8', '西9', '東6', '東7', '東9', '東10'] },
+    { label: '重症・手術', items: ['東5ICU', '東8HCU', '手術室', 'カテーテル検査室'] },
+    { label: '外来',       items: ['外来1', '外来2', '救急外来', '化学療法室', '内視鏡放射線治療室', '血液浄化センター'] },
+    { label: 'その他',     items: ['総合相談センター', '看護部', '感染管理室', AFF_OTHER] }
+  ],
+  doctor: [
+    { label: '内科系の診療科', items: ['腎臓内科', '内分泌・代謝内科', '血液内科', '脳神経内科', '呼吸器内科', '消化器内科',
+                                      '循環器内科', '緩和ケア内科', '小児科', '精神科', '救急科'] },
+    { label: '外科系の診療科', items: ['外科・消化器外科', '整形外科', '脳神経外科', '呼吸器外科', '心臓血管外科', '皮膚科',
+                                      '形成外科', '泌尿器科', '産婦人科', '眼科', '耳鼻咽喉科・頭頸部外科', '口腔外科'] },
+    { label: '専門診療科・その他', items: ['リハビリテーション科', '放射線治療科', '放射線診断科', '麻酔科', '病理診断科',
+                                          '臨床検査科', '輸血科', AFF_OTHER] }
+  ]
+};
+
+// 勉強会・教育の依頼文の1行目に出す区分名
+const EDU_TAG = { nurse: '勉強会・教育', doctor: '教育・その他' };
+
+// 依頼内容・希望する内容の「その他」は、次の質問で入力してもらう（依頼文には入力した文章を出す）
+const OTHER_OPT = 'その他（入力する）';
+function otherOpt(o) { return o.startsWith('その他') ? OTHER_OPT : o; }
+// 勉強会の講義はテーマを入力してもらう
+const THEME_OPT = '部署の勉強会に来て講義してほしい';
+// 勉強会・教育の参加予定人数・希望時期（任意）
+const MEMBERS = ['5名以下', '6〜10名', '11〜20名', '21名以上', '未定'];
+const TIMING  = ['今月中', '来月', '2〜3か月以内', '時期は相談したい'];
+const SKIP_CHOICE = '選ばずに進む';
+// 勉強会・教育の対象部署：看護師は所属と同じ一覧、医師は診療科に病棟・重症・外来を加える
+function deptGroups(role) { return role === 'nurse' ? affiliationOptions.nurse : affiliationOptions.doctor.concat(wardGroups); }
+
+// 依頼文に出す値（「その他」は入力した文章）
+function supportValue(s) { return s.support === OTHER_OPT ? s.supportOther : s.support; }
+function eduValue(s)     { return s.eduType === OTHER_OPT ? s.eduOther : s.eduType; }
+function deptValue(s)    { return s.dept === AFF_OTHER ? s.deptOther : s.dept; }
+
+const educationOptions = {
+  doctor: [
+    '症例について多職種でカンファレンスをしたい',
+    '担当患者の臨床判断について一緒に整理したい',
+    '研修医・学生への指導に同席・協力してほしい',
+    'その他（自由記載に記載）'
+  ],
+  nurse: [
+    '症例について多職種でカンファレンスをしたい',
+    '担当患者の臨床判断について一緒に整理したい',
+    '部署の勉強会に来て講義してほしい',
+    '患者対応について個別に相談したい',
+    '新人・研修生のOJTに同行・指導してほしい',
+    'ラダー研修の内容について相談したい',
+    'その他（自由記載に記載）'
+  ]
+};
+
+/* 送る前の確認（テスト運用計画書 案v6 第3節・第7節） */
+const checkItems = {
+  nurse: [
+    // 配列は「どちらかを選ぶ」項目
+    ['電子カルテの指示簿カレンダーで、医師の一時指示を確認した（特定行為の実施を依頼する）',
+     '相談のみ（特定行為の実施は依頼しない）'],
+    '依頼したことを、ブロックリーダーまたは同部署の看護師に伝える'
+  ],
+  doctor: []
+};
+
+/* 受付時間（設定シートT3・T4・S列と同じ値） */
+const RECEPT_START = 10 * 60;
+const RECEPT_END   = 15 * 60;
+// 祝日（2026〜2031年。春分・秋分は計算による予定日。年1回、Excel設定シートS列とあわせて確認）
+const HOLIDAYS = [
+  '2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04',
+  '2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12',
+  '2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22',
+  '2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23',
+  '2027-10-11','2027-11-03','2027-11-23','2028-01-01','2028-01-10','2028-02-11','2028-02-23','2028-03-20',
+  '2028-04-29','2028-05-03','2028-05-04','2028-05-05','2028-07-17','2028-08-11','2028-09-18','2028-09-22',
+  '2028-10-09','2028-11-03','2028-11-23','2029-01-01','2029-01-08','2029-02-11','2029-02-12','2029-02-23',
+  '2029-03-20','2029-04-29','2029-04-30','2029-05-03','2029-05-04','2029-05-05','2029-07-16','2029-08-11',
+  '2029-09-17','2029-09-23','2029-09-24','2029-10-08','2029-11-03','2029-11-23','2030-01-01','2030-01-14',
+  '2030-02-11','2030-02-23','2030-03-20','2030-04-29','2030-05-03','2030-05-04','2030-05-05','2030-05-06',
+  '2030-07-15','2030-08-11','2030-08-12','2030-09-16','2030-09-23','2030-10-14','2030-11-03','2030-11-04',
+  '2030-11-23','2031-01-01','2031-01-13','2031-02-11','2031-02-23','2031-02-24','2031-03-21','2031-04-29',
+  '2031-05-03','2031-05-04','2031-05-05','2031-05-06','2031-07-21','2031-08-11','2031-09-15','2031-09-23',
+  '2031-10-13','2031-11-03','2031-11-23','2031-11-24'
+];
+
+const STORE_KEY = 'tokutei-irai-requester';   // 統合版と同じ（記憶した氏名・所属・連絡先を共用）
+
+/* ---------- 質問の定義 ----------
+   回答の履歴（hist）を先頭から当てはめて状態を作り、次の質問を決める。
+   「1つ戻る」は履歴の最後を取り消すだけ。
+*/
+const URGENCY  = ['本日中', '至急ではない'];          // 「緊急」はこの窓口で受けない
+const CALLBACK = ['要', '不要（メッセージで十分）'];
+const REMEMBER = ['記憶する（個人の端末のみ）', '記憶しない'];
+const TOLD     = '伝える（確認しました）';
+
+let hist = [];           // [{ key, value, label }]
+let flash = [];          // 次の描画で一度だけ出すボットの吹き出し
+let confirmTop = null;   // 確認画面で最初に見せる吹き出し
+let justAnswered = false; // 答えた直後の描画か（自分の答えの吹き出しもふわっと出す）
+
+function stateOf(h) {
+  const s = { role: '', entry: null, group: '', action: '' };
+  h.forEach(x => {
+    if (x.key === 'role')  s.role = x.value;
+    else if (x.key === 'entry') s.entry = data[s.role].entries.find(e => e.no === x.value);
+    else if (x.key === 'group') {
+      s.group = x.value;
+      const g = s.entry.groups.find(g => g.label === x.value);
+      if (g.actions.length === 1) s.action = g.actions[0];   // 行為が1つの分類はそのまま確定
+    }
+    else if (x.key === 'action') {
+      s.action = x.value;
+      s.group = s.entry.groups.find(g => g.actions.includes(x.value)).label;
+    }
+    else if (x.key === 'wardCat' && typeof x.value === 'object') {
+      // 「所属と同じ」を選んだときは区分と病棟・部署をまとめて入れる
+      s.wardCat = x.value.wardCat;
+      s.ward = x.value.ward;
+    }
+    else if (x.key === 'deptCat' && typeof x.value === 'object') {
+      // 対象部署の「所属と同じ」も同じ
+      s.deptCat = x.value.deptCat;
+      s.dept = x.value.dept;
+    }
+    else if (x.key === 'affCat' && typeof x.value === 'object') {
+      // 「前回と同じ」を選んだときは記憶した所属をまとめて入れる
+      s.affCat = x.value.affCat;
+      s.aff = x.value.aff;
+      if (x.value.aff === AFF_OTHER) s.affOther = x.value.affOther;
+    }
+    else s[x.key] = x.value;
+  });
+  return s;
+}
+
+// 分類を選ばずに行為を並べる入口（どの分類も行為が1つ）
+function isSingle(entry) { return entry.groups.every(g => g.actions.length === 1); }
+
+function nextKey(s) {
+  if (!s.gate)  return 'gate';   // はじめに、緊急でないことを確かめる
+  if (!s.role)  return 'role';
+  if (!s.entry) return 'entry';
+  const edu = s.entry.type === 'edu';
+  const seq = edu
+    ? ['eduType', ...(s.eduType === OTHER_OPT ? ['eduOther'] : []), ...(s.eduType === THEME_OPT ? ['theme'] : []),
+       'deptCat', 'dept', ...(s.dept === AFF_OTHER ? ['deptOther'] : []), 'members', 'timing']
+    : [...(isSingle(s.entry) ? [] : ['group']), 'action', 'support', ...(s.support === OTHER_OPT ? ['supportOther'] : []),
+       'pid', 'pname', 'wardCat', 'ward', 'status'];
+  seq.push('urgency', 'callback', 'note', 'name', 'affCat', 'aff', ...(s.aff === AFF_OTHER ? ['affOther'] : []), 'contact', 'remember');
+  // 送る前の確認：一時指示の確認（check1）は特定行為の依頼だけ
+  if (!edu && s.role === 'nurse') seq.push(...(isNonAct(s) ? [] : ['check1']), 'check2');
+  for (const k of seq) {
+    if (k === 'group' || k === 'action') { if (!s[k]) return k; continue; }
+    if (!(k in s)) return k;
+  }
+  return s.sent ? 'done' : 'confirm';
+}
+
+function stored() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    // v7までは「氏名／所属」を1欄に記憶していたため、所属の部分を外す
+    if (s && !s.role && s.name) s.name = s.name.split(/[／\/]/)[0].trim();
+    return s;
+  }
+  catch (e) { return null; }
+}
+
+// 記憶した所属（同じ職種で、今の選択肢にあるときだけ使う）
+function storedAff(role) {
+  const m = stored();
+  if (!m || m.role !== role) return null;
+  const cat = affiliationOptions[role].find(c => c.label === m.affCat);
+  if (!cat || !cat.items.includes(m.aff)) return null;
+  if (m.aff === AFF_OTHER && !m.affOther) return null;
+  return { affCat: m.affCat, aff: m.aff, affOther: m.affOther || '' };
+}
+
+// 依頼文に出す所属（「その他」は入力した文字）
+function affValue(s) { return s.aff === AFF_OTHER ? s.affOther : s.aff; }
+
+/* 質問ごとの文面と答え方
+   type: choice（ボタン）／text（1行）／area（複数行）
+   optional: 空欄で進める（skipの文言） */
+function question(k, s) {
+  const doctor = s.role === 'doctor';
+  const mem = stored();
+  switch (k) {
+    case 'gate':
+      // 緊急のときの連絡先は最初から出しておく（押さなくても分かるように）
+      return { text: '緊急の依頼ではありませんか？\nこの窓口は、緊急でない相談・依頼のためのものです。', type: 'choice', long: true,
+               options: [['ok', '緊急ではない（依頼の入力へ進む）']],
+               after: { cls: 'warn', text: '緊急の場合は、この窓口は使わず直接連絡してください。\n看護師：主治医・担当医・ドクターハリー・RRT等へ直接連絡\n医師：電話等で直接連絡' } };
+    case 'role':
+      return { text: '職種を選んでください。', type: 'choice', long: true,
+               options: [['nurse', '看護師'], ['doctor', '医師']] };
+    case 'entry':
+      return { text: '依頼する内容を選んでください。', type: 'choice', long: true,
+               options: data[s.role].entries.map(e => [e.no, e.label]) };
+    case 'group':
+      return { text: '分類を選んでください。', type: 'choice',
+               options: s.entry.groups.map(g => [g.label, g.label]) };
+    case 'action': {
+      const acts = isSingle(s.entry) ? s.entry.groups.map(g => g.actions[0])
+                                     : s.entry.groups.find(g => g.label === s.group).actions;
+      return { text: '具体的な行為を選んでください。', type: 'choice', long: true,
+               options: acts.map(a => [a, a]) };
+    }
+    case 'support': {
+      const opts = (requestOptions[s.role] && requestOptions[s.role][s.action]) || [OTHER_OPT];
+      return { text: '「' + s.action + '」の依頼内容を選んでください。', type: 'choice', long: true,
+               options: opts.map(otherOpt).map(o => [o, o]) };
+    }
+    case 'supportOther':
+      return { text: '依頼内容を入力してください。', type: 'text' };
+    case 'pid':
+      return doctor
+        ? { text: '患者さんのIDを入力してください。\nカルテ番号が手元にない場合は空欄で進めます。', type: 'text',
+            inputmode: 'numeric', optional: '空欄で進む（未記載）' }
+        : { text: '患者さんのIDを入力してください。', type: 'text', inputmode: 'numeric' };
+    case 'pname':
+      return { text: '患者さんの氏名を入力してください。', type: 'text' };
+    case 'wardCat': {
+      // 看護師は、記憶した所属が選択肢にあれば「所属と同じ」を先頭に出す（依頼者の質問より前のため記憶を使う）
+      const prev = s.role === 'nurse' ? storedAff('nurse') : null;
+      const opts = wardGroups.map(g => [g.label, g.label]);
+      const long = !!(prev && wardOptions.includes(prev.aff));
+      if (long) opts.unshift([{ wardCat: wardGroups.find(g => g.items.includes(prev.aff)).label, ward: prev.aff }, '所属と同じ：' + prev.aff]);
+      return { text: '患者さんの病棟・部署の区分を選んでください。', type: 'choice', long: long, options: opts };
+    }
+    case 'ward':
+      return { text: '患者さんの病棟・部署を選んでください。', type: 'choice',
+               options: wardGroups.find(g => g.label === s.wardCat).items.map(w => [w, w]) };
+    case 'status':
+      return { text: '現在の状況・説明を入力してください（任意）。', type: 'area', optional: '入力せずに進む',
+               placeholder: doctor ? '目的・指示内容など（任意）' : 'バイタル、経過、気になっている点など' };
+    case 'eduType':
+      return { text: '希望する内容を選んでください。', type: 'choice', long: true,
+               options: educationOptions[s.role].map(otherOpt).map(o => [o, o]) };
+    case 'eduOther':
+      return { text: '希望する内容を入力してください。', type: 'text' };
+    case 'theme':
+      return { text: '勉強会のテーマを入力してください。', type: 'text' };
+    case 'deptCat': {
+      // 記憶した所属が選択肢にあれば「所属と同じ」を先頭に出す（依頼者の質問より前のため記憶を使う）
+      const groups = deptGroups(s.role);
+      const prev = storedAff(s.role);
+      const opts = groups.map(g => [g.label, g.label]);
+      const long = !!(prev && prev.aff !== AFF_OTHER && groups.some(g => g.items.includes(prev.aff)));
+      if (long) opts.unshift([{ deptCat: groups.find(g => g.items.includes(prev.aff)).label, dept: prev.aff }, '所属と同じ：' + prev.aff]);
+      return { text: '対象部署の区分を選んでください。', type: 'choice', long: long, options: opts };
+    }
+    case 'dept':
+      return { text: '対象部署を選んでください。', type: 'choice',
+               options: deptGroups(s.role).find(g => g.label === s.deptCat).items.map(v => [v, v]) };
+    case 'deptOther':
+      return { text: '対象部署を入力してください。', type: 'text' };
+    case 'members':
+      return { text: '参加予定人数を選んでください（任意）。', type: 'choice',
+               options: MEMBERS.map(o => [o, o]).concat([['', SKIP_CHOICE]]) };
+    case 'timing':
+      return { text: '希望時期を選んでください（任意）。', type: 'choice',
+               options: TIMING.map(o => [o, o]).concat([['', SKIP_CHOICE]]) };
+    case 'urgency':
+      // 患者の依頼だけ緊急時の案内を出す（勉強会・教育には出さない）
+      return { text: '緊急度を選んでください。', type: 'choice', options: URGENCY.map(o => [o, o]),
+               after: emergencyText(s) ? { cls: 'warn', text: emergencyText(s) } : null };
+    case 'callback':
+      return { text: '折り返し電話を希望しますか。', type: 'choice', options: CALLBACK.map(o => [o, o]) };
+    case 'note':
+      return { text: 'その他・自由記載があれば入力してください（任意）。', type: 'area', optional: '入力せずに進む' };
+    case 'name':
+      return { text: '依頼者の氏名を入力してください。', type: 'text', autocomplete: 'name',
+               placeholder: doctor ? '例）山田 太郎' : '例）山田 花子',
+               options: mem && mem.name ? [[mem.name, mem.name]] : null };
+    case 'affCat': {
+      const prev = storedAff(s.role);
+      const opts = affiliationOptions[s.role].map(c => [c.label, c.label]);
+      if (prev) opts.unshift([prev, '前回と同じ：' + affValue(prev)]);
+      return { text: doctor ? '所属の診療科の区分を選んでください。' : '所属の区分を選んでください。', type: 'choice', long: !!prev,
+               options: opts };
+    }
+    case 'aff':
+      return { text: doctor ? '所属の診療科を選んでください。' : '所属を選んでください。', type: 'choice',
+               options: affiliationOptions[s.role].find(c => c.label === s.affCat).items.map(v => [v, v]) };
+    case 'affOther':
+      return { text: '所属を入力してください。', type: 'text' };
+    case 'contact':
+      return { text: '連絡先（内線・PHS）を入力してください。', type: 'text', inputmode: 'tel',
+               options: mem && mem.contact ? [[mem.contact, mem.contact]] : null };
+    case 'remember':
+      return { text: 'この端末に氏名・所属・連絡先を記憶しますか。\n次回から選ぶだけで入力できます。', type: 'choice',
+               options: REMEMBER.map(o => [o, o]) };
+    case 'check1':
+      return { text: '送る前の確認です。当てはまるものを選んでください。', type: 'choice', long: true,
+               options: checkItems.nurse[0].map(o => [o, o]) };
+    case 'check2':
+      return { text: checkItems.nurse[1] + 'ようにしてください。', type: 'choice', options: [[TOLD, TOLD]] };
+  }
+}
+
+/* ---------- 画面の描画 ---------- */
+
+function qs(s)  { return document.querySelector(s); }
+function qsa(s) { return [...document.querySelectorAll(s)]; }
+function toggle(id, on) { qs('#' + id).classList.toggle('on', on); }
+
+function setMsg(text) {
+  const el = qs('#msg');
+  el.textContent = text;
+  el.classList.toggle('hide', !text);
+}
+
+function bot(text, cls) {
+  const row = document.createElement('div');
+  row.className = 'bot';
+  const i = document.createElement('div');
+  i.className = 'icon';
+  i.textContent = '窓口';
+  const b = document.createElement('div');
+  b.className = 'bubble' + (cls ? ' ' + cls : '');
+  if (typeof text === 'string') b.textContent = text; else b.appendChild(text);
+  row.appendChild(i);
+  row.appendChild(b);
+  qs('#log').appendChild(row);
+  return b;
+}
+
+function me(text) {
+  const row = document.createElement('div');
+  row.className = 'me';
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.textContent = text;
+  row.appendChild(b);
+  qs('#log').appendChild(row);
+}
+
+function render() {
+  const log = qs('#log');
+  log.innerHTML = '';
+  setMsg('');
+
+  // 受付状況はヘッダー下の帯に常に出す
+  renderStatus(receptionNotice(new Date()));
+  bot('特定看護師への相談・依頼を受け付けます。');
+
+  // 答えた質問を順に再現する
+  let newFrom = hist.length ? -1 : 0;   // ここから後ろの吹き出しをふわっと出す
+  for (let n = 0; n < hist.length; n++) {
+    if (hist[n].key === 'sent') { me(hist[n].label); continue; }
+    const s = stateOf(hist.slice(0, n));
+    const q = question(hist[n].key, s);
+    bot(q.text);
+    if (q.after) bot(q.after.text, q.after.cls);
+    if (n === hist.length - 1 && justAnswered) newFrom = log.children.length;
+    me(hist[n].label);
+  }
+  if (newFrom < 0) newFrom = log.children.length;   // 1つ戻る・最初からは次の質問だけ
+
+  const s = stateOf(hist);
+  const k = nextKey(s);
+  qs('#undo').disabled = hist.length === 0;
+
+  if (k === 'confirm' || k === 'done') {
+    if (k === 'confirm') renderConfirm(s); else renderDone(s);
+  } else {
+    const q = question(k, s);
+    bot(q.text);
+    if (q.after) bot(q.after.text, q.after.cls);
+    flash.forEach(f => bot(f.text, f.cls));
+    renderAnswer(k, q);
+    if (flash.length) setMsg(flash[0].text);   // 答えのすぐ上にも出す
+  }
+  flash = [];
+  justAnswered = false;
+
+  // 新しく出たものだけ、少しずつずらしてふわっと出す（全体の描き直しは見せない）
+  const fresh = [...log.children].slice(newFrom);
+  fresh.forEach((x, i) => { x.classList.add('new'); x.style.animationDelay = (i * 0.12) + 's'; });
+  const ans = qs('#answer');
+  ans.classList.remove('new');
+  void ans.offsetWidth;   // アニメーションをやり直す
+  ans.classList.add('new');
+  ans.style.animationDelay = (fresh.length * 0.12) + 's';
+
+  log.scrollTop = log.scrollHeight;
+  // 確認画面は、入力内容の先頭が見える位置で止める（送るボタンは画面下にある）
+  if (confirmTop) { log.scrollTop = confirmTop.closest('.bot').offsetTop - 8; confirmTop = null; }
+}
+
+// 受付状況の帯（時間内は緑、時間外・運用日以外は橙。色だけでなく記号と文字でも区別する）
+function renderStatus(t) {
+  const bar = qs('#status');
+  bar.className = 'status ' + (t.info ? 'open' : 'closed');
+  bar.innerHTML = '';
+  bar.appendChild(el('span', 'mark', t.info ? '●' : '⚠'));
+  const box = el('div', '');
+  box.appendChild(el('b', '', t.lines[0]));
+  box.appendChild(el('span', 'sub', t.lines.slice(1).join(' ')));
+  bar.appendChild(box);
+}
+
+function answer(key, value, label) {
+  hist.push({ key: key, value: value, label: label });
+  justAnswered = true;
+  render();
+}
+
+function renderAnswer(k, q) {
+  const box = qs('#answer');
+  box.innerHTML = '';
+
+  // 質問文を答えのすぐ上にも出す（読む場所と押す場所を近づけ、視線の上下を減らす）
+  const head = el('div', 'qhead', q.text);
+  if (q.after) head.appendChild(el('span', 'qwarn', q.after.text));
+  box.appendChild(head);
+
+  if (q.options) {
+    const wrap = document.createElement('div');
+    wrap.className = 'choices' + (q.grid ? ' grid4' : '') + (q.long ? ' long' : '');
+    q.options.forEach(([value, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice' + (q.type !== 'choice' ? ' primary' : '');
+      b.textContent = q.type !== 'choice' ? '前回と同じ：' + label : label;
+      const fut = k === 'action' ? futureOf(value) : null;
+      if (fut) {
+        const t = document.createElement('span');
+        t.className = 'soon';
+        t.textContent = fut.label;
+        b.appendChild(t);
+      }
+      b.onclick = () => {
+        if (fut) {
+          // 受付開始前の行為は案内を出して先へ進めない（v9と同じ）
+          flash.push({ cls: 'warn', text: value + 'は、2027年4月からこの窓口での受付を予定しています。現在は、麻酔科で依頼を受けながら研修として実施しています。現在の依頼は、麻酔科へお願いします。' });
+          render();
+          return;
+        }
+        answer(k, value, label);
+      };
+      wrap.appendChild(b);
+    });
+    box.appendChild(wrap);
+  }
+  if (q.type === 'choice') return;
+
+  const row = document.createElement('div');
+  row.className = 'inputrow';
+  if (q.options) row.style.marginTop = '8px';
+  const inp = document.createElement(q.type === 'area' ? 'textarea' : 'input');
+  inp.id = 'reply';
+  if (q.inputmode) inp.setAttribute('inputmode', q.inputmode);
+  if (q.autocomplete) inp.setAttribute('autocomplete', q.autocomplete);
+  if (q.placeholder) inp.placeholder = q.placeholder;
+  const go = document.createElement('button');
+  go.type = 'button';
+  go.className = 'sendq';
+  go.textContent = '送る';
+  const submit = () => {
+    const v = inp.value.trim();
+    if (!v) {
+      if (q.optional) { answer(k, '', q.optional); return; }
+      setMsg('入力してから「送る」を押してください。');
+      return;
+    }
+    answer(k, v, v);
+  };
+  go.onclick = submit;
+  if (q.type === 'text') {
+    inp.setAttribute('enterkeyhint', 'send');
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); submit(); }
+    });
+  }
+  row.appendChild(inp);
+  row.appendChild(go);
+  box.appendChild(row);
+
+  if (q.optional) {
+    const sk = document.createElement('div');
+    sk.className = 'choices skip';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'choice';
+    b.textContent = q.optional;
+    b.onclick = () => answer(k, '', q.optional);
+    sk.appendChild(b);
+    box.appendChild(sk);
+  }
+  // スマホで勝手にキーボードが開かないよう、指で操作しない端末だけ入力欄へ移る
+  if (!isMobile) inp.focus();
+}
+
+/* ---------- 依頼文の作成（統合版v12と同じ書式） ----------
+   受け取る側（当番・公式グループの実施者）がスマホで読みやすい形
+   ・1行目：［緊急度］、2行目：行為名／患者の病棟（患者ID・氏名は出さない）
+     勉強会・教育は［勉強会・教育］（医師は［教育・その他］）、2行目：希望する内容／対象部署
+   ・見出しは【 】の1種類。見出しの次の行に内容。項目の間に空行を入れない
+     患者：【依頼者】【行為】【依頼内容】【対象患者】【現在の状況】【その他】
+     勉強会・教育：【依頼者】【依頼内容】【対象・時期】【その他】
+   ・依頼メニュー名は出さない。Excelの受付マクロ（v8）が職種と行為から「番号_メニュー名」を決める
+   ・【現在の状況】【その他】は入力がなければ見出しごと出さない
+   ・勉強会・教育は受付一覧に登録しない（受付マクロが対象外と表示する）
+*/
+// 自由記載は空行を除いて行ごとに出す（見出しの区切りと紛れないように）
+function textLines(s) {
+  return s.split('\n').map(x => x.trimEnd()).filter(x => x.trim());
+}
+
+function buildRequestText(s) {
+  const L = [];
+  const edu = s.entry.type === 'edu';
+
+  if (edu) { L.push('［' + EDU_TAG[s.role] + '］'); L.push(eduValue(s) + '／' + deptValue(s)); }
+  else     { L.push('［' + s.urgency + '］');      L.push(s.action + '／' + s.ward); }
+
+  L.push('【依頼者】');
+  L.push(data[s.role].label + '：' + s.name);
+  L.push('所属：' + affValue(s));
+  L.push('連絡先：' + s.contact);
+  L.push('折り返し：' + s.callback);
+
+  if (edu) {
+    L.push('【依頼内容】');
+    L.push(eduValue(s));
+    if (s.eduType === THEME_OPT) L.push('テーマ：' + s.theme);
+    L.push('【対象・時期】');
+    L.push('対象部署：' + deptValue(s));
+    if (s.members) L.push('参加予定人数：' + s.members);
+    if (s.timing)  L.push('希望時期：' + s.timing);
+    L.push('緊急度：' + s.urgency);
+  } else {
+    L.push('【行為】');
+    L.push(s.action);
+    L.push('【依頼内容】');
+    L.push(supportValue(s));
+    L.push('【対象患者】');
+    L.push('ID：' + (s.pid || '未記載'));
+    L.push('氏名：' + s.pname);
+    L.push('病棟・部署：' + s.ward);
+    if (s.status) { L.push('【現在の状況】'); L.push(...textLines(s.status)); }
+  }
+  if (s.note) { L.push('【その他】'); L.push(...textLines(s.note)); }
+  if (edu) L.push('※受付一覧の登録対象外');
+  return L.join('\n');
+}
+
+function summaryItem(box, label, value) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  const b = document.createElement('b');
+  b.textContent = label;
+  const v = document.createElement('div');
+  v.textContent = value || '（未入力）';
+  d.appendChild(b);
+  d.appendChild(v);
+  box.appendChild(d);
+}
+
+function el(tag, cls, text) {
+  const x = document.createElement(tag);
+  if (cls) x.className = cls;
+  if (text) x.textContent = text;
+  return x;
+}
+
+function renderConfirm(s) {
+  saveRequester(s);
+
+  // 入力内容の確認
+  const c1 = el('div', 'card');
+  c1.appendChild(el('h3', '', '入力内容を確認してください'));
+  const sum = el('div', 'summary');
+  summaryItem(sum, '依頼者', data[s.role].label + '／' + s.name + '／' + affValue(s) + '（' + s.contact + '）');
+  summaryItem(sum, '依頼メニュー', s.entry.label + (s.action ? '｜' + s.action : ''));
+  if (s.entry.type === 'edu') {
+    summaryItem(sum, '希望する内容', eduValue(s) + (s.eduType === THEME_OPT ? '（テーマ：' + s.theme + '）' : ''));
+    summaryItem(sum, '対象部署', deptValue(s));
+    if (s.members || s.timing) summaryItem(sum, '参加予定人数／希望時期', (s.members || '－') + '／' + (s.timing || '－'));
+  } else {
+    summaryItem(sum, '依頼内容', supportValue(s));
+    summaryItem(sum, '対象の患者さん', [s.pid || 'ID未記載', s.pname, s.ward].join('／'));
+    if (s.status) summaryItem(sum, '現在の状況・説明', s.status);
+  }
+  summaryItem(sum, '緊急度／折り返し', s.urgency + '／' + s.callback);
+  if (s.note) summaryItem(sum, 'その他・自由記載', s.note);
+  c1.appendChild(sum);
+  bot(c1).style.padding = '0';
+  c1.parentNode.style.border = '0';
+  c1.parentNode.style.background = 'none';
+  c1.closest('.bot').classList.add('wide');   // 確認内容は画面の幅いっぱいに出す
+  // 受付状況は上の帯に出ているので、ここでは繰り返さない
+
+  // 送り方（v9と同じ：スマホは共有、PCはコピー）。ボタンは画面下に固定して出す
+  const text = buildRequestText(s);
+  const c2 = el('div', 'card');
+  c2.appendChild(el('h3', '', '送り方'));
+  if (canShare) {
+    c2.appendChild(el('div', 'howto-sub', '① 画面下の「依頼窓口へ送る」を押す'));
+    const f = el('p', 'flow');
+    f.innerHTML = '→ LINE WORKS を選ぶ<br>→ 宛先「特定行為依頼窓口」を選ぶ<br>→ 送信';
+    c2.appendChild(f);
+  }
+  c2.appendChild(el('div', 'howto-sub', canShare ? '② ①が使えないとき：画面下の「依頼文をコピー」を押す' : '画面下の「依頼文をコピー」を押す'));
+  c2.appendChild(el('p', 'flow', isMobile
+    ? '→ LINE WORKSで「特定行為依頼窓口」のトークを開き、貼り付けて送信'
+    : '→ LINE WORKS（PC版）で「特定行為依頼窓口」のトークを開き、貼り付けて送信'));
+  const nt = el('p', 'note');
+  nt.innerHTML = '※ LINE WORKSで送信するまで、依頼は<span class="nb">届きません。</span><br>※ 個人宛て・公式グループには<span class="nb">送らないでください。</span><br>※ トークが見つからない場合は、LINE WORKSで「特定行為依頼窓口」を検索して<span class="nb">追加してください。</span>';
+  c2.appendChild(nt);
+  const pv = el('details', 'preview');
+  pv.appendChild(el('summary', '', '送信される依頼文を見る'));
+  const ta = el('textarea', 'preview-textarea');
+  ta.id = 'copyPreview';
+  ta.readOnly = true;
+  ta.value = text;
+  pv.appendChild(ta);
+  c2.appendChild(pv);
+  bot(c2).style.padding = '0';
+  c2.parentNode.style.border = '0';
+  c2.parentNode.style.background = 'none';
+
+  const c3 = el('div', 'card');
+  c3.appendChild(el('h3', '', '送信後にすること'));
+  c3.appendChild(doneList(s));
+  bot(c3).style.padding = '0';
+  c3.parentNode.style.border = '0';
+  c3.parentNode.style.background = 'none';
+
+  // 画面下：大きい送るボタン1つ＋その下に小さい2つ（確認内容を広く見せるため低くまとめる）
+  const box = qs('#answer');
+  box.innerHTML = '';
+  const w = el('div', 'sendbox');
+  const send = el('button', 'send-btn', canShare ? '依頼窓口へ送る（LINE WORKS）' : '依頼文をコピー');
+  send.type = 'button';
+  send.onclick = canShare ? () => toggle('shareModal', true) : copyText;
+  w.appendChild(send);
+  const row = el('div', 'subrow');
+  if (canShare) {
+    const cb = el('button', 'choice', '依頼文をコピー');
+    cb.type = 'button';
+    cb.onclick = copyText;
+    row.appendChild(cb);
+  }
+  const b = el('button', 'choice', '送信した → 次へ');
+  b.type = 'button';
+  b.onclick = () => answer('sent', true, 'LINE WORKSで送信しました');
+  row.appendChild(b);
+  w.appendChild(row);
+  box.appendChild(w);
+  confirmTop = c1;
+}
+
+function renderDone(s) {
+  const c = el('div', 'card');
+  c.appendChild(el('h3', '', '送信後の流れ'));
+  c.appendChild(doneList(s));
+  bot(c).style.padding = '0';
+  c.parentNode.style.border = '0';
+  c.parentNode.style.background = 'none';
+  if (emergencyText(s)) {
+    bot(s.role === 'doctor'
+      ? '緊急の場合は、返答を待たずに電話等で直接連絡してください。'
+      : '緊急時や状態が悪化した場合は、返答を待たずに主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。', 'notice');
+  }
+
+  const box = qs('#answer');
+  box.innerHTML = '';
+  const w = el('div', 'choices long');
+  const b = el('button', 'choice primary', '新しい依頼を作成');
+  b.type = 'button';
+  b.onclick = () => { hist = []; render(); };
+  w.appendChild(b);
+  box.appendChild(w);
+}
+
+// 特定行為ではない相談（意思決定支援・個別カンファレンス）。緊急時の案内・一時指示の確認を出さない
+const NON_ACTS = ['意思決定支援', '個別カンファレンス'];
+function isNonAct(s) { return NON_ACTS.includes(s.action); }
+
+// 緊急時の案内（看護師は院内の連絡先、医師は医師向け案内と同じ言い方。勉強会・教育、意思決定支援等は出さない）
+function emergencyText(s) {
+  if (s.entry.type === 'edu' || isNonAct(s)) return '';
+  return s.role === 'doctor'
+    ? '緊急の依頼はこの窓口を使わず、電話等で直接連絡してください。'
+    : '緊急時はこの窓口を使わず、主治医・担当医・ドクターハリー・RRT等へ直接連絡してください。';
+}
+
+function doneList(s) {
+  // 勉強会・教育は患者の対応がないため、共有と返答の2点だけ
+  const items = s.entry.type === 'edu' || (s.role === 'doctor' && isNonAct(s))
+    ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
+       '対応する特定看護師（実施者）から、直接返答があります。']
+    : s.role === 'doctor'
+    ? ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
+       '対応する特定看護師（実施者）から、直接返答があります。',
+       '特定行為を依頼する場合は、指示簿カレンダーへの一時指示の記載をお願いします。']
+    : ['依頼窓口の当番が依頼を確認し、特定看護師の公式グループへ共有します。',
+       '対応する特定看護師（実施者）から、直接返答があります。',
+       '依頼したことを、ブロックリーダーまたは同部署の看護師に伝えてください。',
+       '勤務終了などで不在になる場合は、依頼内容と対応状況を部署の関係者へ引き継いでください。',
+       '実施者が初めて患者さんに会うときは、依頼者も同席してください。'];
+  const ul = el('ul', 'done-list');
+  items.forEach(t => ul.appendChild(el('li', '', t)));
+  return ul;
+}
+
+function saveRequester(s) {
+  try {
+    if (s.remember === REMEMBER[0]) {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ name: s.name, contact: s.contact,
+        role: s.role, affCat: s.affCat, aff: s.aff, affOther: s.aff === AFF_OTHER ? s.affOther : '' }));
+    } else {
+      localStorage.removeItem(STORE_KEY);
+    }
+  } catch (e) { /* 保存できない環境では何もしない */ }
+}
+
+/* ---------- 受付時間・受付開始前の行為（v9と同じ） ---------- */
+
+const futureActions = {
+  'PICC挿入':         { start: '2027-04-01', label: '2027年4月〜' },
+  'ミッドライン挿入': { start: '2027-04-01', label: '2027年4月〜' }
+};
+function futureOf(a) {
+  const f = futureActions[a];
+  if (!f) return null;
+  const d = new Date(), ymd = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return ymd < f.start ? f : null;
+}
+
+function receptionNotice(now) {
+  const ymd = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  const dow = now.getDay();
+  const min = now.getHours() * 60 + now.getMinutes();
+  if (dow === 0 || dow === 6 || HOLIDAYS.includes(ymd)) {
+    return { info: false, lines: ['本日は運用日ではありません', '次の運用日の10時～11時に確認します。'] };
+  }
+  if (min < RECEPT_START || min > RECEPT_END) {
+    return { info: false, lines: ['受付時間外です（平日10時～15時）', '次の運用日の10時～11時に確認します。'] };
+  }
+  return { info: true, lines: ['受付時間内です', '当番が確認し、実施者から返答します。', '当日の対応は確約できません。'] };
+}
+
+/* ---------- 送信・コピー（v9と同じ） ---------- */
+
+function shareText() {
+  navigator.share({ text: qs('#copyPreview').value }).then(() => {
+    setMsg('共有メニューで送信先に「特定行為依頼窓口」を選んだことを確認してください。');
+  }).catch(() => {});
+}
+
+function copyText() {
+  const preview = qs('#copyPreview');
+  const ok = () => { setMsg('✓ 依頼文をコピーしました。LINE WORKSの「特定行為依頼窓口」のトークに貼り付けて送信してください。'); };
+  const ng = () => { qs('.preview').open = true; preview.select(); setMsg('自動でコピーできませんでした。下の依頼文を長押しして全選択・コピーしてください。'); };
+  const fallback = () => {
+    preview.select();
+    preview.setSelectionRange(0, preview.value.length);
+    let done = false;
+    try { done = document.execCommand('copy'); } catch (e) { done = false; }
+    done ? ok() : ng();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(preview.value).then(ok).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+/* ---------- イベント ---------- */
+
+// スマホ・タブレット（主な操作が指）だけ「直接送る」を出す。PCは共有先にLINE WORKSが出ないためコピーのみ
+const isMobile = (window.matchMedia && matchMedia('(pointer: coarse)').matches)
+  || !!(navigator.userAgentData && navigator.userAgentData.mobile);
+const canShare = !!navigator.share && isMobile;
+
+qs('#undo').onclick = () => {
+  if (!hist.length) return;
+  hist.pop();
+  render();
+};
+qs('#restart').onclick = () => { hist = []; render(); };
+qs('#help').onclick = () => toggle('helpModal', true);
+qsa('[data-close]').forEach(b => b.onclick = () => toggle(b.dataset.close, false));
+qs('#shareOk').onclick = () => { toggle('shareModal', false); shareText(); };
+
+render();
+</script>
+</body>
+</html>
