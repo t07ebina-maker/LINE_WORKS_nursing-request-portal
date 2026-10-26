@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>特定行為依頼窓口 v17</title>
+  <title>特定行為依頼窓口 v18</title>
   <style>
 /* ============================================================
    特定行為実践相談・依頼窓口 v2（単一HTML）
@@ -80,6 +80,12 @@ body {
 .grid { display: grid; gap: 8px; }
 .group-label { margin: 6px 2px 0; font-size: 13px; font-weight: 700; color: var(--main-deep); }
 .jump { display: flex; flex-wrap: wrap; gap: 6px; }
+/* 行為の検索欄（v18） */
+.act-search input {
+  width: 100%; border: 1px solid #c9d7d1; border-radius: 12px; padding: 10px 12px;
+  font: inherit; font-size: 16px; background: #fff; color: var(--text);
+}
+.act-search .hint { margin-top: 6px; }
 .jump button { font: inherit; font-size: 12px; padding: 6px 10px; border: 0; border-radius: 999px; background: #e3ece9; color: #24534d; cursor: pointer; }
 .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .g2 .btn { padding: 9px 10px; font-size: 13px; line-height: 1.35; }
@@ -549,7 +555,7 @@ const data = {
                                             'IABP離脱補助頻度調整','カテコラミン投与量調整','降圧剤投与量調整','抗精神病薬臨時投与'] },
         { label: '輸液管理',       actions: ['脱水症状への輸液補正','高カロリー輸液投与量調整'] },
         { label: '電解質調整',     actions: ['Na・K・Cl投与量調整'] },
-        { label: '血管路管理',     actions: ['CV抜去','PICC挿入','ミッドライン挿入','直接動脈穿刺採血','橈骨動脈ライン確保'] },
+        { label: '血管路管理',     actions: ['末梢静脈路（ルート）確保','CV抜去','PICC挿入','ミッドライン挿入','直接動脈穿刺採血','橈骨動脈ライン確保'] },
         { label: '創傷・創部管理', actions: ['壊死組織除去（デブリドマン）','陰圧閉鎖療法（NPWT）','褥瘡・創傷ケア全般',
                                             '心嚢ドレーン抜去','胸腔ドレーン抜去','腹腔ドレーン抜去','創部ドレーン抜去'] },
         { label: '感染対応',       actions: ['感染徴候への薬剤臨時投与','感染対応の相談'] },
@@ -623,7 +629,8 @@ const requestOptions = {
     'せん妄・BPSD':                 ['せん妄が疑われ対応を相談したい','BPSDへの対応について相談したい','療養環境の調整を相談したい','その他（補足欄に記載）'],
     '気切チューブ交換':             ['医師から交換の話が出ており実施を依頼したい','交換の時期・方法を相談したい','その他（補足欄に記載）'],
     'ミッドライン挿入':             ['末梢確保が困難でミッドライン挿入を相談したい','ミッドライン適応について相談したい','その他（補足欄に記載）'],
-    '感染対応の相談':               ['感染徴候があり対応を相談したい','感染対策（隔離・予防策）について相談したい','その他（補足欄に記載）']
+    '感染対応の相談':               ['感染徴候があり対応を相談したい','感染対策（隔離・予防策）について相談したい','その他（補足欄に記載）'],
+    '末梢静脈路（ルート）確保':     ['末梢確保が困難で、確保を依頼したい','エコー下での確保を相談したい','その他（補足欄に記載）']
   }
 };
 
@@ -855,6 +862,44 @@ function futureOf(a) {
   return ymd < f.start ? f : null;
 }
 
+// 行為の検索：現場の呼び方（言い換え）でも見つかるようにする（v18）
+const ACTION_WORDS = {
+  '末梢静脈路（ルート）確保':     ['ルート', '点滴', '末梢', '静脈路', '血管確保', 'IV'],
+  '陰圧閉鎖療法（NPWT）':         ['NPWT', '陰圧', 'VAC', 'バック'],
+  '壊死組織除去（デブリドマン）': ['デブリ', 'デブリードマン', '壊死'],
+  '褥瘡・創傷ケア全般':           ['褥瘡', '創傷', 'スキンテア', '床ずれ'],
+  '橈骨動脈ライン確保':           ['Aライン', '動脈ライン'],
+  '直接動脈穿刺採血':             ['血ガス', '動脈血', 'ABG'],
+  '高カロリー輸液投与量調整':     ['TPN', 'IVH', '高カロリー'],
+  '脱水症状への輸液補正':         ['脱水', '輸液'],
+  'Na・K・Cl投与量調整':          ['電解質', 'ナトリウム', 'カリウム'],
+  'カテコラミン投与量調整':       ['カテコラミン', '昇圧剤', 'ノルアド'],
+  '侵襲的陽圧換気設定変更':       ['呼吸器', 'ベンチレーター', 'レスピ'],
+  '人工呼吸器離脱':               ['呼吸器', 'ベンチレーター', 'レスピ', 'ウィーニング'],
+  '気管チューブ位置調整':         ['挿管', '位置調整'],
+  '気切チューブ交換':             ['気切', 'カニューレ'],
+  '心嚢ドレーン抜去':             ['ドレーン'],
+  '胸腔ドレーン抜去':             ['ドレーン'],
+  '腹腔ドレーン抜去':             ['ドレーン'],
+  '創部ドレーン抜去':             ['ドレーン'],
+  'CV抜去':                       ['CV', '中心静脈'],
+  '感染徴候への薬剤臨時投与':     ['抗菌薬', '抗生剤', '感染'],
+  '感染対応の相談':               ['抗菌薬', '抗生剤', '感染'],
+  'せん妄・BPSD':                 ['せん妄', '不穏', '認知症'],
+  '抗精神病薬臨時投与':           ['せん妄', '不穏', '認知症']
+};
+// 全角・半角、大文字・小文字、カタカナ・ひらがな、空白の違いを区別しない
+function normWord(s) {
+  return s.normalize('NFKC').toLowerCase()
+    .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .split(' ').join('');
+}
+function matchAction(a, q) {
+  const n = normWord(q);
+  return !n || [a].concat(ACTION_WORDS[a] || []).some(w => normWord(w).includes(n));
+}
+const SEARCH_HINT = '行為を探す（例：ルート、VAC、デブリ）';
+
 function renderActions() {
   qs('#entryBox').classList.add('hide');
   const box = qs('#actionBox');
@@ -868,6 +913,7 @@ function renderActions() {
   const jump = document.createElement('div');
   jump.className = 'jump';
   if (!single) box.appendChild(jump);
+  const found = [];   // 検索で出し入れする分類ごとの見出し・行為ボタン
   st.entry.groups.forEach(g => {
     let wrap = box;
     if (!single) {
@@ -883,6 +929,7 @@ function renderActions() {
       wrap = document.createElement('div');
       wrap.className = 'g2';
       box.appendChild(wrap);
+      found.push({ h: h, wrap: wrap, btns: [] });
     }
     g.actions.forEach(a => {
       const b = makeBtn('action', a);
@@ -920,9 +967,41 @@ function renderActions() {
         selectOne(box, b);
         proceedToInput();
       };
+      b.dataset.action = a;
+      if (found.length) found[found.length - 1].btns.push(b);
       wrap.appendChild(b);
     });
   });
+
+  // 行為の検索（分類が複数ある入口だけ）：入れた言葉に当てはまる行為だけを残す
+  if (!single) {
+    const sw = document.createElement('div');
+    sw.className = 'act-search';
+    const inp = document.createElement('input');
+    inp.type = 'search';
+    inp.placeholder = SEARCH_HINT;
+    inp.setAttribute('enterkeyhint', 'search');
+    const none = document.createElement('p');
+    none.className = 'hint hide';
+    none.textContent = '見つかりません。言葉を変えるか、下の一覧から選んでください。';
+    inp.oninput = () => {
+      const q = inp.value;
+      let hit = 0;
+      found.forEach(g => {
+        let n = 0;
+        g.btns.forEach(b => { const ok = matchAction(b.dataset.action, q); b.classList.toggle('hide', !ok); if (ok) n++; });
+        g.h.classList.toggle('hide', !n);
+        g.wrap.classList.toggle('hide', !n);
+        hit += n;
+      });
+      jump.classList.toggle('hide', !!normWord(q));
+      none.classList.toggle('hide', hit > 0);
+      if (!hit) found.forEach(g => { g.h.classList.remove('hide'); g.wrap.classList.remove('hide'); g.btns.forEach(b => b.classList.remove('hide')); });
+    };
+    sw.appendChild(inp);
+    sw.appendChild(none);
+    box.insertBefore(sw, box.firstChild);
+  }
 }
 
 /* ---------- 入力 ---------- */
@@ -1358,7 +1437,8 @@ function copyText() {
 }
 
 // 特定行為ではない相談（意思決定支援・個別カンファレンス）。緊急時の案内・一時指示の確認を出さない
-const NON_ACTS = ['意思決定支援', '個別カンファレンス'];
+// 末梢静脈路（ルート）確保は特定行為ではないため、一時指示の確認を出さない（v18、看護師のみ）
+const NON_ACTS = ['意思決定支援', '個別カンファレンス', '末梢静脈路（ルート）確保'];
 function isNonAct() { return NON_ACTS.includes(st.action); }
 
 // 緊急を選んだときの案内（看護師は院内の連絡先、医師は医師向け案内と同じ言い方）
